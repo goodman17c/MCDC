@@ -1,6 +1,6 @@
 import numpy as np
 
-from mcdc.constant import INF, GR_ALL, PCT_NONE
+from mcdc.constant import INF, GR_ALL, PCT_NONE, WEIGHT_WINDOW_ISOTROPIC
 
 class InputCard:
     def __init__(self):
@@ -95,6 +95,7 @@ class InputCard:
                           'population_control'   : False,
                           'branchless_collision' : False,
                           'weight_window'        : False,
+                          'weight_window_type'   : WEIGHT_WINDOW_ISOTROPIC,
                           'weight_window_rho'    : 1.0,
                           'time_census'          : False,
                           'IC_generator'         : False,
@@ -102,6 +103,10 @@ class InputCard:
                           'pct'                  : PCT_NONE,
 
                           'ww'                   : np.ones([1,1,1,1]), 
+                          'wwBx'                 : np.zeros([1,1,1,1]), 
+                          'wwBy'                 : np.zeros([1,1,1,1]), 
+                          'wwBz'                 : np.zeros([1,1,1,1]), 
+                          'wwo'                  : np.ones([1,1,1,1,8]), 
                           'ww_mesh'              : {'x' : np.array([-INF, INF]),
                                                     'y' : np.array([-INF, INF]),
                                                     'z' : np.array([-INF, INF]),

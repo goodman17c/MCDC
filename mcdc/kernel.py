@@ -1890,7 +1890,7 @@ def time_boundary(P, mcdc):
     P['alive'] = False
 
 #==============================================================================
-# Weight widow
+# Weight window
 #==============================================================================
     
 @njit
@@ -1901,7 +1901,26 @@ def weight_window(P, mcdc):
     if (not outside):
 
         # Target weight
-        w_target = mcdc['technique']['ww'][t,x,y,z]
+        #Isotropic Weights
+        if (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_ISOTROPIC):
+            w_target = mcdc['technique']['ww'][t,x,y,z]
+        #Minerbo Weights
+        elif (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_MINERBO):
+            w_target = mcdc['technique']['ww'][t,x,y,z]
+            Bx=mcdc['technique']['wwBx'][t,x,y,z]
+            By=mcdc['technique']['wwBy'][t,x,y,z]
+            Bz=mcdc['technique']['wwBz'][t,x,y,z]
+            w_target=w_target*math.exp(P['ux']*Bx+P['uy']*By+P['uz']*Bz)
+        #Octant Weights
+        elif (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_OCTANT):
+            octant=0 
+            if (P['ux'] < 0):
+                octant += 1
+            if (P['uy'] < 0):
+                octant += 2
+            if (P['uz'] < 0):
+                octant += 4
+            w_target = mcdc['technique']['wwo'][t,x,y,z,octant]
 
         # Check if no weight windows in cell
         if (w_target > 0):
@@ -1935,7 +1954,6 @@ def weight_window(P, mcdc):
                     P['alive'] = False
                 else:
                     P['w'] = w_target
-
 
 #==============================================================================
 # Miscellany

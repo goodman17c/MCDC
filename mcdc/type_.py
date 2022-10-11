@@ -264,8 +264,7 @@ def make_type_technique(card):
     struct = [('weighted_emission', bool_), ('implicit_capture', bool_),
               ('population_control', bool_), ('branchless_collision', bool_),
               ('weight_window', bool_), ('IC_generator', bool_),
-              ('time_census', bool_)]
-    
+              ('weight_window_type', int64),('time_census', bool_)]
 
     struct += [('weight_window_rho', float64)]
 
@@ -285,6 +284,14 @@ def make_type_technique(card):
     
     # Window
     struct += [('ww', float64, (Nt, Nx, Ny, Nz))]
+    
+    # Minerbo Weight Windows
+    struct += [('wwBx', float64, (Nt, Nx, Ny, Nz))]
+    struct += [('wwBy', float64, (Nt, Nx, Ny, Nz))]
+    struct += [('wwBz', float64, (Nt, Nx, Ny, Nz))]
+    
+    # Window
+    struct += [('wwo', float64, (Nt, Nx, Ny, Nz, 8))]
 
     # =========================================================================
     # Time census

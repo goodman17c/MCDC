@@ -695,7 +695,8 @@ def census(t, pct='none'):
     if pct != 'none':
         population_control(pct)
 
-def weight_window(x=None, y=None, z=None, t=None, window=None, rho=None):
+def weight_window(wwtype="isotropic",x=None, y=None, z=None, t=None, window=None,
+                  rho=None, Bx=None, By=None, Bz=None):
     card = mcdc.input_card.technique
     card['weight_window'] = True
 
@@ -708,20 +709,52 @@ def weight_window(x=None, y=None, z=None, t=None, window=None, rho=None):
     # Set window width
     if rho is not None: card['weight_window_rho'] = rho
 
-    # Set window
-    ax_expand = []
-    if t is None:
-        ax_expand.append(0)
-    if x is None:
-        ax_expand.append(1)
-    if y is None:
-        ax_expand.append(2)
-    if z is None:
-        ax_expand.append(3)
-    for ax in ax_expand:
-        window = np.expand_dims(window, axis=ax)
-    card['ww'] = window
+    if (wwtype=="isotropic" or wwtype=="standard"):
+        weight_window_type=WEIGHT_WINDOW_ISOTROPIC
+    elif (wwtype=="minerbo"):
+        weight_window_type=WEIGHT_WINDOW_MINERBO
+    elif (wwtype=="octant"):
+        weight_window_type=WEIGHT_WINDOW_OCTANT
 
+    if (weight_window_type==WEIGHT_WINDOW_ISOTROPIC
+        or weight_window_type==WEIGHT_WINDOW_MINERBO):
+        # Set window
+        ax_expand = []
+        if t is None:
+            ax_expand.append(0)
+        if x is None:
+            ax_expand.append(1)
+        if y is None:
+            ax_expand.append(2)
+        if z is None:
+            ax_expand.append(3)
+        for ax in ax_expand:
+            window = np.expand_dims(window, axis=ax)
+        card['ww'] = window
+
+    if (weight_window_type==WEIGHT_WINDOW_MINERBO):
+        for ax in ax_expand:
+            Bx = np.expand_dims(Bx, axis=ax)
+            By = np.expand_dims(By, axis=ax)
+            Bz = np.expand_dims(Bz, axis=ax)
+        card['wwBx'] = Bx 
+        card['wwBy'] = By
+        card['wwBz'] = Bz
+    
+    if (weight_window_type==WEIGHT_WINDOW_OCTANT):
+        ax_expand = []
+        if t is None:
+            ax_expand.append(0)
+        if x is None:
+            ax_expand.append(1)
+        if y is None:
+            ax_expand.append(2)
+        if z is None:
+            ax_expand.append(3)
+        for ax in ax_expand:
+            window = np.expand_dims(window, axis=ax)
+        card['wwo'] = window
+        
     return card
 
 def IC_generator(N_neutron=0, N_precursor=0):
