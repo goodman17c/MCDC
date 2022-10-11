@@ -33,6 +33,12 @@ GR_ONLY_X     = 4
 GR_ONLY_Y     = 5
 GR_ONLY_Z     = 6
 
+#Weight Windows
+WEIGHT_WINDOW_ISOTROPIC = 0
+WEIGHT_WINDOW_MINERBO = 10
+WEIGHT_WINDOW_OCTANT = 20
+
+
 # Population control
 PCT_NONE            = 0
 PCT_COMBING        = 1

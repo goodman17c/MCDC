@@ -107,10 +107,7 @@ def loop_source(mcdc):
 
             # Apply weight window
             if mcdc['technique']['weight_window']:
-                if mcdc['technique']['weight_window_quad']:
-                    kernel.weight_window_quad(P, mcdc)
-                else:
-                    kernel.weight_window(P, mcdc)
+                kernel.weight_window(P, mcdc)
             
             # Particle loop
             loop_particle(P, mcdc)
