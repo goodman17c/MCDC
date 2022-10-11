@@ -53,5 +53,3 @@ PREC  = 1.0+1E-5 # Precision factor to determine if a distance is smaller than
 BANKMAX = 100 # Default maximum active bank
 #PLANCK = 
 #BOLTZMANN
-#
-

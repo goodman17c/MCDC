@@ -342,7 +342,7 @@ def bank_scanning(bank, mcdc):
     # Starting index
     buff = np.zeros(1, dtype=np.int64)
     with objmode():
-        MPI.COMM_WORLD.Exscan(np.array([N_local]), buff, MPI.SUM)
+        MPI.COMM_WORLD.Exscan(np.array([N_local],dtype=np.int64), buff, MPI.SUM)
     idx_start = buff[0]
 
     # Global size
