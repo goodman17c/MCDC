@@ -981,6 +981,8 @@ def score_tracklength(P, distance, mcdc):
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington'])
     if tally['n']:
         score_flux(g, t, x, y, z, 1.0, tally['score']['n'])
+    if tally['octant_flux']:
+        score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux'])
 
 @njit
 def score_crossing_x(P, t, x, y, z, mcdc):
@@ -1011,6 +1013,8 @@ def score_crossing_x(P, t, x, y, z, mcdc):
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington_x'])
     if tally['n_x']:
         score_flux(g, t, x, y, z, 1.0, tally['score']['n_x'])
+    if tally['octant_flux_x']:
+        score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux_x'])
 
 @njit
 def score_crossing_y(P, t, x, y, z, mcdc):
@@ -1041,6 +1045,8 @@ def score_crossing_y(P, t, x, y, z, mcdc):
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington_y'])
     if tally['n_y']:
         score_flux(g, t, x, y, z, 1.0, tally['score']['n_y'])
+    if tally['octant_flux_y']:
+        score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux_y'])
 
 @njit
 def score_crossing_z(P, t, x, y, z, mcdc):
@@ -1071,6 +1077,8 @@ def score_crossing_z(P, t, x, y, z, mcdc):
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington_z'])
     if tally['n_z']:
         score_flux(g, t, x, y, z, 1.0, tally['score']['n_z'])
+    if tally['octant_flux_z']:
+        score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux_z'])
 
 @njit
 def score_crossing_t(P, t, x, y, z, mcdc):
@@ -1100,6 +1108,8 @@ def score_crossing_t(P, t, x, y, z, mcdc):
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington_t'])
     if tally['n_t']:
         score_flux(g, t, x, y, z, 1.0, tally['score']['n_t'])
+    if tally['octant_flux_t']:
+        score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux_t'])
 
 @njit
 def score_flux(g, t, x, y, z, flux, score):
@@ -1122,6 +1132,17 @@ def score_eddington(g, t, x, y, z, flux, P, score):
     score['bin'][g, t, x, y, z, 3] += flux*uy*uy
     score['bin'][g, t, x, y, z, 4] += flux*uy*uz
     score['bin'][g, t, x, y, z, 5] += flux*uz*uz
+
+@njit
+def score_octant_flux(g, t, x, y, z, flux, P, score):
+    octant=0 
+    if (P['ux'] < 0):
+        octant += 1
+    if (P['uy'] < 0):
+        octant += 2
+    if (P['uz'] < 0):
+        octant += 4
+    score['bin'][g, t, x, y, z, octant] += flux
 
 @njit
 def score_closeout_history(score, mcdc):

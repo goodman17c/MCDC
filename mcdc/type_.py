@@ -152,11 +152,11 @@ def make_type_source(G):
 tally = None
 
 # Score lists
-score_tl_list = ('n',   'flux',   'current',   'eddington',   'density',   'fission',   'total')
-score_x_list  = ('n_x', 'flux_x', 'current_x', 'eddington_x', 'density_x', 'fission_x', 'total_x')
-score_y_list  = ('n_y', 'flux_y', 'current_y', 'eddington_y', 'density_y', 'fission_y', 'total_y')
-score_z_list  = ('n_z', 'flux_z', 'current_z', 'eddington_z', 'density_z', 'fission_z', 'total_z')
-score_t_list  = ('n_t', 'flux_t', 'current_t', 'eddington_t', 'density_t', 'fission_t', 'total_t')
+score_tl_list = ('n',   'flux',   'current',   'eddington',   'density',   'fission',   'total'  , 'octant_flux'  )
+score_x_list  = ('n_x', 'flux_x', 'current_x', 'eddington_x', 'density_x', 'fission_x', 'total_x', 'octant_flux_x')
+score_y_list  = ('n_y', 'flux_y', 'current_y', 'eddington_y', 'density_y', 'fission_y', 'total_y', 'octant_flux_y')
+score_z_list  = ('n_z', 'flux_z', 'current_z', 'eddington_z', 'density_z', 'fission_z', 'total_z', 'octant_flux_z')
+score_t_list  = ('n_t', 'flux_t', 'current_t', 'eddington_t', 'density_t', 'fission_t', 'total_t', 'octant_flux_t')
 
 score_list = score_tl_list + score_x_list + score_y_list + score_z_list\
                            + score_t_list
@@ -181,41 +181,46 @@ def make_type_tally(card):
     # Scores and shapes
     Ng = card.materials[0]['G']
     scores_shapes = [
-                     ['flux',        (Ng, Nt, Nx, Ny, Nz)],
-                     ['density',     (Ng, Nt, Nx, Ny, Nz)],
-                     ['fission',     (Ng, Nt, Nx, Ny, Nz)],
-                     ['total',     (Ng, Nt, Nx, Ny, Nz)],
-                     ['current',     (Ng, Nt, Nx, Ny, Nz, 3)],
-                     ['eddington',   (Ng, Nt, Nx, Ny, Nz, 6)],
-                     ['n',        (Ng, Nt, Nx, Ny, Nz)],
-                     ['flux_x',      (Ng, Nt, Nx+1, Ny, Nz)],
-                     ['density_x',   (Ng, Nt, Nx+1, Ny, Nz)],
-                     ['fission_x',   (Ng, Nt, Nx+1, Ny, Nz)],
-                     ['total_x',   (Ng, Nt, Nx+1, Ny, Nz)],
-                     ['current_x',   (Ng, Nt, Nx+1, Ny, Nz, 3)],
-                     ['eddington_x', (Ng, Nt, Nx+1, Ny, Nz, 6)],
-                     ['n_x',      (Ng, Nt, Nx+1, Ny, Nz)],
-                     ['flux_y',      (Ng, Nt, Nx, Ny+1, Nz)],
-                     ['density_y',   (Ng, Nt, Nx, Ny+1, Nz)],
-                     ['fission_y',   (Ng, Nt, Nx, Ny+1, Nz)],
-                     ['total_y',   (Ng, Nt, Nx, Ny+1, Nz)],
-                     ['current_y',   (Ng, Nt, Nx, Ny+1, Nz, 3)],
-                     ['eddington_y', (Ng, Nt, Nx, Ny+1, Nz, 6)],
-                     ['n_y',      (Ng, Nt, Nx, Ny+1, Nz)],
-                     ['flux_z',      (Ng, Nt, Nx, Ny, Nz+1)],
-                     ['density_z',   (Ng, Nt, Nx, Ny, Nz+1)],
-                     ['fission_z',   (Ng, Nt, Nx, Ny, Nz+1)],
-                     ['total_z',   (Ng, Nt, Nx, Ny, Nz+1)],
-                     ['current_z',   (Ng, Nt, Nx, Ny, Nz+1, 3)],
-                     ['eddington_z', (Ng, Nt, Nx, Ny, Nz+1, 6)],
-                     ['n_z',      (Ng, Nt, Nx, Ny, Nz+1)],
-                     ['flux_t',      (Ng, Nt+1, Nx, Ny, Nz)],
-                     ['density_t',   (Ng, Nt+1, Nx, Ny, Nz)],
-                     ['fission_t',   (Ng, Nt+1, Nx, Ny, Nz)],
-                     ['total_t',   (Ng, Nt+1, Nx, Ny, Nz)],
-                     ['current_t',   (Ng, Nt+1, Nx, Ny, Nz, 3)],
-                     ['eddington_t', (Ng, Nt+1, Nx, Ny, Nz, 6)],
-                     ['n_t',      (Ng, Nt+1, Nx, Ny, Nz)],
+                     ['flux',            (Ng, Nt, Nx, Ny, Nz)],
+                     ['density',         (Ng, Nt, Nx, Ny, Nz)],
+                     ['fission',         (Ng, Nt, Nx, Ny, Nz)],
+                     ['total',           (Ng, Nt, Nx, Ny, Nz)],
+                     ['current',         (Ng, Nt, Nx, Ny, Nz, 3)],
+                     ['eddington',       (Ng, Nt, Nx, Ny, Nz, 6)],
+                     ['n',               (Ng, Nt, Nx, Ny, Nz)],
+                     ['octant_flux',     (Ng, Nt, Nx, Ny, Nz, 8)],
+                     ['flux_x',          (Ng, Nt, Nx+1, Ny, Nz)],
+                     ['density_x',       (Ng, Nt, Nx+1, Ny, Nz)],
+                     ['fission_x',       (Ng, Nt, Nx+1, Ny, Nz)],
+                     ['total_x',         (Ng, Nt, Nx+1, Ny, Nz)],
+                     ['current_x',       (Ng, Nt, Nx+1, Ny, Nz, 3)],
+                     ['eddington_x',     (Ng, Nt, Nx+1, Ny, Nz, 6)],
+                     ['n_x',             (Ng, Nt, Nx+1, Ny, Nz)],
+                     ['octant_flux_x',   (Ng, Nt, Nx+1, Ny, Nz, 8)],
+                     ['flux_y',          (Ng, Nt, Nx, Ny+1, Nz)],
+                     ['density_y',       (Ng, Nt, Nx, Ny+1, Nz)],
+                     ['fission_y',       (Ng, Nt, Nx, Ny+1, Nz)],
+                     ['total_y',         (Ng, Nt, Nx, Ny+1, Nz)],
+                     ['current_y',       (Ng, Nt, Nx, Ny+1, Nz, 3)],
+                     ['eddington_y',     (Ng, Nt, Nx, Ny+1, Nz, 6)],
+                     ['n_y',             (Ng, Nt, Nx, Ny+1, Nz)],
+                     ['octant_flux_y',   (Ng, Nt, Nx, Ny+1, Nz, 8)],
+                     ['flux_z',          (Ng, Nt, Nx, Ny, Nz+1)],
+                     ['density_z',       (Ng, Nt, Nx, Ny, Nz+1)],
+                     ['fission_z',       (Ng, Nt, Nx, Ny, Nz+1)],
+                     ['total_z',         (Ng, Nt, Nx, Ny, Nz+1)],
+                     ['current_z',       (Ng, Nt, Nx, Ny, Nz+1, 3)],
+                     ['eddington_z',     (Ng, Nt, Nx, Ny, Nz+1, 6)],
+                     ['n_z',             (Ng, Nt, Nx, Ny, Nz+1)],
+                     ['octant_flux_z',   (Ng, Nt, Nx, Ny, Nz+1, 8)],
+                     ['flux_t',          (Ng, Nt+1, Nx, Ny, Nz)],
+                     ['density_t',       (Ng, Nt+1, Nx, Ny, Nz)],
+                     ['fission_t',       (Ng, Nt+1, Nx, Ny, Nz)],
+                     ['total_t',         (Ng, Nt+1, Nx, Ny, Nz)],
+                     ['current_t',       (Ng, Nt+1, Nx, Ny, Nz, 3)],
+                     ['eddington_t',     (Ng, Nt+1, Nx, Ny, Nz, 6)],
+                     ['n_t',             (Ng, Nt+1, Nx, Ny, Nz)],
+                     ['octant_flux_t',   (Ng, Nt+1, Nx, Ny, Nz, 8)],
                     ]
 
     # Add score flags to structure
