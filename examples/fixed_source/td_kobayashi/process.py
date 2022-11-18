@@ -25,7 +25,12 @@ with h5py.File('output.h5', 'r') as f:
 #plt.rcParams["figure.figsize"] = [7.00, 3.50]
 #plt.rcParams["figure.autolayout"] = True
 
+#vmin = -6
+#phi[phi==0]=1e-16
+#vmax = np.nanmax(np.log10(phi))
+
 fig, ax = plt.subplots()
+#cax = ax.pcolormesh(X, Y, np.log10(phi[0]), vmin=vmin, vmax=vmax)
 cax = ax.pcolormesh(X, Y, phi[0], vmin=phi[0].min(), vmax=phi[0].max())
 text = ax.text(0.02, 1.02, '', transform=ax.transAxes)
 ax.set_aspect('equal', 'box')
@@ -38,5 +43,6 @@ def animate(i):
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(t[i],t[i+1]))
 
 anim = animation.FuncAnimation(fig, animate, interval=10, frames=len(t) - 1)
+anim.save('kobay_phi.gif', savefig_kwargs={'bbox_inches':'tight', 'pad_inches':0})
 plt.show()
 
