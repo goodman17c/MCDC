@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import mcdc
 
@@ -32,20 +31,32 @@ mcdc.cell([+sx2, -sx3, +sy1, -sy2], m_barrier)
 # =============================================================================
 
 #source
-mcdc.source(x=[0.0, 5.0], y=[0.0, 5.0], prob=5*5, isotropic=True)
+mcdc.source(x=[0.0, 5.0], y=[0.0, 5.0], isotropic=True)
 
 # =============================================================================
 # Set tally, setting, and run mcdc
 # =============================================================================
 
-mcdc.tally(scores=['flux'],
+mcdc.tally(scores=['flux','n','current','octant-flux'],
            x=np.linspace(0.0, 20.0, 41), 
            y=np.linspace(0.0, 20.0, 41))
 
 # Setting
-mcdc.setting(N_particle=1E4)
+mcdc.setting(N_particle=1E5,
+             active_bank_buff=2.147E7, #max c int limit
+             )
 
 # Technique
 mcdc.implicit_capture()
+
+f = np.load("ww.npz")
+mcdc.weight_window(x=np.linspace(0.0, 20.0, 41),
+                   y=np.linspace(0.0, 20.0, 41),
+                   rho=1.0,
+                   wwtype='octant',
+                   window=f['phi'])
+#                   Bx=f['Bx'],
+#                   By=f['By'],
+#                   Bz=f['Bz'])
 
 mcdc.run()

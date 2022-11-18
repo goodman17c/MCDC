@@ -55,12 +55,14 @@ mcdc.source(x=[0.0, 10.0], y=[0.0, 10.0], z=[0.0, 10.0], time=[0.0, 50.0],
 # Set tally, setting, and run mcdc
 # =============================================================================
 
-mcdc.tally(scores=['flux'], 
+mcdc.tally(scores=['n','flux','current'], 
            x=np.linspace(0.0, 60.0, 61), y=np.linspace(0.0, 100.0, 101), 
            t=np.linspace(0.0, 200.0, 21))
 
 # Setting
-mcdc.setting(N_particle=int(1E4))
+mcdc.setting(N_particle=1E9,
+             output="outputIC"
+             )
 mcdc.implicit_capture()
 
 # Run
