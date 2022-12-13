@@ -35,7 +35,23 @@ mcdc.tally(scores=['flux', 'flux-x', 'flux-t'],
            t=np.linspace(0.0, 20.0, 21))
 
 # Setting
-mcdc.setting(N_particle=1E3)
+mcdc.setting(N_particle=1E2,
+             time_boundary=20.1,
+             active_bank_buff=1E4)
+
+data = np.load('azurv1_pl.npz')
+phi_t_ref = data['phi_t']
+phi_ref = data['phi']
+t=np.linspace(0.0, 20.0, 21)
+t[0] = -1.0
+mcdc.weight_window(
+           x=np.linspace(-20.5, 20.5, 202), 
+           t=t,
+           rho=1.0,
+           wwtype='isotropic',
+           window=phi_ref)
+           
+
 
 # Run
 mcdc.run()
