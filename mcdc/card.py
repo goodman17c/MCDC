@@ -1,6 +1,6 @@
 import numpy as np
 
-from mcdc.constant import INF, GR_ALL, PCT_NONE, WEIGHT_WINDOW_ISOTROPIC
+from mcdc.constant import INF, GR_ALL, PCT_NONE, PI, WEIGHT_WINDOW_ISOTROPIC
 
 class InputCard:
     def __init__(self):
@@ -70,7 +70,9 @@ class InputCard:
                       'mesh'            : {'x' : np.array([-INF, INF]),
                                            'y' : np.array([-INF, INF]),
                                            'z' : np.array([-INF, INF]),
-                                           't' : np.array([-INF, INF])}}
+                                           't' : np.array([-INF, INF]),
+                                           'mu'  : np.array([-1.0, 1.0]),
+                                           'azi' : np.array([-PI, PI])}}
 
         self.setting = {'tag'                  : 'Setting',
                         'N_particle'           : 0,
@@ -86,6 +88,7 @@ class InputCard:
                         'rng_mod'              : 2**63,
                         'bank_active_buff'     : 100,
                         'bank_census_buff'     : 1.0,
+                        'N_cycle_buff'         : 0,
                         'k_init'               : 1.0,
                         'output'               : 'output',
                         'progress_bar'         : True,
@@ -95,32 +98,36 @@ class InputCard:
                         'source_file'          : ''}
 
         self.technique = {'tag'                  : 'Technique', 
+
                           'weighted_emission'    : True,
                           'implicit_capture'     : False,
-                          'population_control'   : False,
                           'branchless_collision' : False,
                           'weight_window'        : False,
                           'weight_window_type'   : WEIGHT_WINDOW_ISOTROPIC,
                           'weight_window_rho'    : 1.0,
                           'time_census'          : False,
                           'IC_generator'         : False,
-
+                          'population_control'   : False,
                           'pct'                  : PCT_NONE,
-
                           'ww'                   : np.ones([1,1,1,1]), 
                           'wwBx'                 : np.zeros([1,1,1,1]), 
                           'wwBy'                 : np.zeros([1,1,1,1]), 
                           'wwBz'                 : np.zeros([1,1,1,1]), 
                           'wwo'                  : np.ones([1,1,1,1,8]), 
-                          'ww_mesh'              : {'x' : np.array([-INF, INF]),
-                                                    'y' : np.array([-INF, INF]),
-                                                    'z' : np.array([-INF, INF]),
-                                                    't' : np.array([-INF, INF])},
-
+                          'ww_mesh'       : {'x'   : np.array([-INF, INF]),
+                                             'y'   : np.array([-INF, INF]),
+                                             'z'   : np.array([-INF, INF]),
+                                             't'   : np.array([-INF, INF]),
+                                             'mu'  : np.array([-1.0, 1.0]),
+                                             'azi' : np.array([-PI, PI]),
+                                             },
+                          'time_census' : False,
                           'census_time' : np.array([INF]),
 
-                          'IC_Nn'                : 0,
-                          'IC_Np'                : 0}
+                          'IC_generator'   : False,
+                          'IC_N_neutron'   : 0,
+                          'IC_N_precursor' : 0,
+                          }
 
 class SurfaceHandle:
     def __init__(self, card):
