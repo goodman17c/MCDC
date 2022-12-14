@@ -1138,7 +1138,7 @@ def score_tracklength(P, distance, mcdc):
     if tally['eddington']:
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington'])
     if tally['n']:
-        score_flux(g, t, x, y, z, 1.0, tally['score']['n'])
+        score_flux(g, t, x, y, z, mu, azi, 1.0, tally['score']['n'])
     if tally['octant_flux']:
         score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux'])
 
@@ -1171,7 +1171,7 @@ def score_crossing_x(P, t, x, y, z, mcdc):
     if tally['eddington_x']:
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington_x'])
     if tally['n_x']:
-        score_flux(g, t, x, y, z, 1.0, tally['score']['n_x'])
+        score_flux(g, t, x, y, z, mu, azi, 1.0, tally['score']['n_x'])
     if tally['octant_flux_x']:
         score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux_x'])
 
@@ -1204,7 +1204,7 @@ def score_crossing_y(P, t, x, y, z, mcdc):
     if tally['eddington_y']:
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington_y'])
     if tally['n_y']:
-        score_flux(g, t, x, y, z, 1.0, tally['score']['n_y'])
+        score_flux(g, t, x, y, z, mu, azi, 1.0, tally['score']['n_y'])
     if tally['octant_flux_y']:
         score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux_y'])
 
@@ -1237,7 +1237,7 @@ def score_crossing_z(P, t, x, y, z, mcdc):
     if tally['eddington_z']:
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington_z'])
     if tally['n_z']:
-        score_flux(g, t, x, y, z, 1.0, tally['score']['n_z'])
+        score_flux(g, t, x, y, z, mu, azi, 1.0, tally['score']['n_z'])
     if tally['octant_flux_z']:
         score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux_z'])
 
@@ -1269,7 +1269,7 @@ def score_crossing_t(P, t, x, y, z, mcdc):
     if tally['eddington_t']:
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington_t'])
     if tally['n_t']:
-        score_flux(g, t, x, y, z, 1.0, tally['score']['n_t'])
+        score_flux(g, t, x, y, z, mu, azi, 1.0, tally['score']['n_t'])
     if tally['octant_flux_t']:
         score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux_t'])
 
