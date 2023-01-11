@@ -32,18 +32,23 @@ mcdc.source(point=[0.0,0.0,0.0], isotropic=True)
 # =============================================================================
 
 # Tally: cell-average, cell-edge, and time-edge scalar fluxes
-mcdc.tally(scores=['flux', 'flux-x', 'flux-t'],
+mcdc.tally(scores=['flux','n'],
            x=np.linspace(-20.5, 20.5, 202),
-           t=np.linspace(0.0, 20.0, 21))
+           t=np.linspace(-0.0001, 20.0, 21))
 
 # Setting
-mcdc.setting(N_particle=1E2,
+mcdc.setting(N_particle=1E3,
+             rng_seed=123,
              time_boundary=20.1,
-             active_bank_buff=1E4)
+             active_bank_buff=2E7,
+             census_bank_buff=1E3)
 
-data = np.load('azurv1_pl.npz')
+mcdc.implicit_capture()
+
+data = np.load('reference.npz')
 phi_t_ref = data['phi_t']
 phi_ref = data['phi']
+phi_ref[1:]=phi_ref[:-1] #Use weight windows from previous time step
 t=np.linspace(0.0, 20.0, 21)
 t[0] = -1.0
 mcdc.weight_window(
@@ -52,8 +57,8 @@ mcdc.weight_window(
            rho=1.0,
            wwtype='isotropic',
            window=phi_ref)
-           
 
+mcdc.census(t=t, pct="combing")
 
 # Run
 mcdc.run()

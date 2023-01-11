@@ -301,6 +301,9 @@ def make_type_technique(card):
     
     # Window
     struct += [('wwo', float64, (Nt, Nx, Ny, Nz, 8))]
+    
+    # PCT + WW solution
+    struct += [('pc_factor', float64)]
 
     # =========================================================================
     # Time census

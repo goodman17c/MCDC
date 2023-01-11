@@ -456,11 +456,11 @@ def bank_rebalance(mcdc):
 
         # Send
         if more_left:
-            n = work_start - idx_start
+            n = int(work_start - idx_start)
             request_left = MPI.COMM_WORLD.isend(bank[:n], dest=left)
             bank = bank[n:]
         if more_right:
-            n = idx_end - work_end
+            n = int(idx_end - work_end)
             request_right = MPI.COMM_WORLD.isend(bank[-n:], dest=right)
             bank = bank[:-n]
 
@@ -639,6 +639,9 @@ def pct_combing(mcdc):
     # Teeth distance
     td = N/M
 
+    # Population Control Factor
+    mcdc['technique']['pc_factor'] *= td
+
     # Tooth offset
     xi     = rng(mcdc)
     offset = xi*td
@@ -671,6 +674,9 @@ def pct_combing_weight(mcdc):
 
     # Teeth distance
     td = W/M
+    
+    # Population Control Factor
+    mcdc['technique']['pc_factor'] *= td
 
     # Tooth offset
     xi     = rng(mcdc)
@@ -2143,7 +2149,10 @@ def weight_window(P, mcdc):
 
         # Check if no weight windows in cell
         if (w_target > 0):
-        
+            
+            # Population control factor
+            w_target *= mcdc['technique']['pc_factor']
+
             # Surviving probability
             p = P['w']/w_target
         
