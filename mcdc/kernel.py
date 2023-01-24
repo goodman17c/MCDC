@@ -1145,6 +1145,8 @@ def score_tracklength(P, distance, mcdc):
         score_eddington(g, t, x, y, z, flux, P, tally['score']['eddington'])
     if tally['n']:
         score_flux(g, t, x, y, z, mu, azi, 1.0, tally['score']['n'])
+    if tally['total_w']:
+        score_flux(g, t, x, y, z, mu, azi, P['w'], tally['score']['total_w'])
     if tally['octant_flux']:
         score_octant_flux(g, t, x, y, z, flux, P, tally['score']['octant_flux'])
 

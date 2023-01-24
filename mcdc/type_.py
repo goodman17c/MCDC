@@ -153,7 +153,7 @@ def make_type_source(G):
 tally = None
 
 # Score lists
-score_tl_list = ('n',   'flux',   'current',   'eddington',   'density',   'fission',   'total'  , 'octant_flux'  )
+score_tl_list = ('n',   'flux',   'current',   'eddington',   'density',   'fission',   'total'  , 'octant_flux'  ,'total_w')
 score_x_list  = ('n_x', 'flux_x', 'current_x', 'eddington_x', 'density_x', 'fission_x', 'total_x', 'octant_flux_x')
 score_y_list  = ('n_y', 'flux_y', 'current_y', 'eddington_y', 'density_y', 'fission_y', 'total_y', 'octant_flux_y')
 score_z_list  = ('n_z', 'flux_z', 'current_z', 'eddington_z', 'density_z', 'fission_z', 'total_z', 'octant_flux_z')
@@ -187,6 +187,7 @@ def make_type_tally(card):
                      ['fission',     (Ng, Nt, Nx, Ny, Nz, Nmu, N_azi)],
                      ['total',       (Ng, Nt, Nx, Ny, Nz, Nmu, N_azi)],
                      ['n',           (Ng, Nt, Nx, Ny, Nz, Nmu, N_azi)],
+                     ['total_w',     (Ng, Nt, Nx, Ny, Nz, Nmu, N_azi)],
                      ['flux_x',      (Ng, Nt, Nx+1, Ny, Nz, Nmu, N_azi)],
                      ['density_x',   (Ng, Nt, Nx+1, Ny, Nz, Nmu, N_azi)],
                      ['fission_x',   (Ng, Nt, Nx+1, Ny, Nz, Nmu, N_azi)],

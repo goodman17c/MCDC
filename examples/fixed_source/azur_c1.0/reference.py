@@ -7,12 +7,12 @@ from scipy.integrate import quad
 # =============================================================================
 
 # Scattering ratio
-c = 1.1
+c = 1.0
 i = complex(0,1)
 
 # Spatial grid
 J = 201
-x = np.linspace(-20.5,20.5,J+1)
+x = np.linspace(-20.1,20.1,J+1)
 
 # Time grid
 K = 20

@@ -29,6 +29,7 @@ class InputCard:
                       'current'         : False,
                       'eddington'       : False,
                       'n'               : False,
+                      'total_w'         : False,
                       'octant_flux'     : False,
                       'crossing'        : False,
                       'crossing_x'      : False,
