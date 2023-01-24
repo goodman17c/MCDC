@@ -38,7 +38,7 @@ mcdc.tally(scores=['flux','n','n_t'],
            t=t)
 
 # Setting
-mcdc.setting(N_particle=1E3,
+mcdc.setting(N_particle=1E5,
 #             rng_seed=123,
              time_boundary=20.1,
              active_bank_buff=2E7,

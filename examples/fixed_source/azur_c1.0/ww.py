@@ -20,6 +20,8 @@ J     = len(x_mid)
 data = np.load('reference.npz')
 phi_ref = data['phi']
 
+for k in range(K):
+    phi_ref[k] = phi_ref[k]/np.max(phi_ref[k])
 
 # =============================================================================
 # Print results
@@ -43,7 +45,6 @@ def print_var(outfile, var):
             outfile.write('%12.4e'%var[j][i])
         outfile.write('\n')
     outfile.write('\n')
-
 
 with open('WWs.txt', 'w') as outfile:
     outfile.write('Good WW\n')
