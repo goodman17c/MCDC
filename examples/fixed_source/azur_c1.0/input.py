@@ -7,7 +7,7 @@ import mcdc
 # =============================================================================
 # Infinite medium with isotropic plane surface at the center
 # Based on Ganapol LA-UR-01-1854 (AZURV1 benchmark)
-# Effective scattering ratio c = 1.1
+# Effective scattering ratio c = 1.0
 
 # Set materials
 m = mcdc.material(capture=np.array([0.0]), scatter=np.array([[1.0]]))
@@ -58,11 +58,11 @@ for k in range(20):
 mcdc.weight_window(
            x=np.linspace(-20.1, 20.1, 202), 
            t=t,
-           rho=16.0,
+           rho=1.0,
            wwtype='isotropic',
-           window=phi_t_ref)
+           window=phi_ref)
 
-mcdc.census(t=t[1:], pct="combing")
+#mcdc.census(t=t[1:], pct="combing")
 
 # Run
 mcdc.run()

@@ -20,7 +20,7 @@ K     = len(dt)
 J     = len(x_mid)
 
 data = np.load('reference.npz')
-phi_t_ref = data['phi_t']
+#phi_t_ref = data['phi_t']
 phi_ref = data['phi']
 
 with h5py.File('output.h5', 'r') as f:
@@ -38,6 +38,34 @@ FOM[n==0]=0
 #Average weight of particles in cell
 w_avg = phi/n
 w_avg[n==0] = 0
+
+#Calculate Integral quatities
+phi_int=np.mean(phi,1)*41
+n_int=np.mean(n,1)*41
+
+max_rel_err=np.zeros(K)
+err_inf =np.zeros(K)
+err_L1=np.zeros(K)
+err_L2=np.zeros(K)
+err_2=np.zeros(K)
+rel_err_inf=np.zeros(K)
+rel_err_L1=np.zeros(K)
+rel_err_L2=np.zeros(K)
+rel_err_2=np.zeros(K)
+stat_err=np.zeros(K)
+
+#Analysis of Numerical Solutions
+for k in range(K):
+    max_rel_err[k] = np.max(np.abs(1-np.nan_to_num(phi[k]/phi_ref[k],nan=1) ))
+    err_inf[k] = np.max(np.abs(phi[k]-phi_ref[k]))
+    err_L1[k] = np.sum(np.abs(phi[k]-phi_ref[k])*dx)
+    err_L2[k] = np.sqrt(np.sum(np.power(phi[k]-phi_ref[k],2)*dx))
+    err_2[k] = np.sqrt(np.sum(np.power(phi[k]-phi_ref[k],2)))
+    rel_err_inf[k] = err_inf[k]/np.max(np.abs(phi_ref[k]))
+    rel_err_L1[k] = err_L1[k]/np.sum(np.abs(phi_ref[k])*dx)
+    rel_err_L2[k] = err_L2[k]/np.sqrt(np.sum(np.power(phi_ref[k],2)*dx))
+    rel_err_2[k] = err_2[k]/np.sqrt(np.sum(np.power(phi_ref[k],2)))
+    stat_err[k] = np.sqrt(np.sum(np.power(phi_sd[k],2))/np.sum(np.power(phi[k],2)))
 
 # =============================================================================
 # Print results
@@ -62,7 +90,49 @@ def print_var(outfile, var):
         outfile.write('\n')
     outfile.write('\n')
 
+def print_int(outfile, var):
+    for i in range(K):
+        outfile.write('%12.4e'%var[i])
+    outfile.write('\n')
+
 with open('output.txt', 'w') as outfile:
+    #Integral Quantities
+    outfile.write('\n       it   ')
+    for i in range(K):
+        outfile.write('%12d'%(i+1))
+    outfile.write('\n')
+    outfile.write('       t    ')
+    print_int(outfile, t_mid)
+    outfile.write('integral phi')
+    print_int(outfile, phi_int)
+    outfile.write('integral n  ')
+    print_int(outfile, n_int)
+#    outfile.write('int total w ')
+#    print_int(outfile, total_w_int)
+    outfile.write('Max Rel Err ')
+    print_int(outfile, max_rel_err)
+    outfile.write('Err Inf Norm')
+    print_int(outfile, err_inf)
+    outfile.write('Err L1 Norm ')
+    print_int(outfile, err_L1)
+    outfile.write('Err L2 Norm ')
+    print_int(outfile, err_L2)
+    outfile.write('Err 2 Norm  ')
+    print_int(outfile, err_2)
+    outfile.write('Rel Err Inf ')
+    print_int(outfile, rel_err_inf)
+    outfile.write('Rel Err L1  ')
+    print_int(outfile, rel_err_L1)
+    outfile.write('Rel Err L2  ')
+    print_int(outfile, rel_err_L2)
+    outfile.write('Rel Err 2   ')
+    print_int(outfile, rel_err_2)
+    outfile.write('Stat Err    ')
+    print_int(outfile, stat_err)
+    
+
+    #Space and Time data
+    outfile.write('\n')
     outfile.write('phi\n')
     print_var(outfile, phi)
     outfile.write('phi_reference\n')
@@ -79,14 +149,12 @@ with open('output.txt', 'w') as outfile:
 # =============================================================================
 
 # Integral Flux
-phi_int=np.mean(phi,1)*41
-n_int=np.mean(n,1)*41
-plt.plot(t_mid,phi_int,label="MC")
-plt.plot(t_mid,n_int,label="n")
-plt.grid()
-plt.xlabel(r'$t$')
-plt.ylabel(r'Integral Flux')
-plt.show()
+#plt.plot(t_mid,phi_int,label="MC")
+#plt.plot(t_mid,n_int,label="n")
+#plt.grid()
+#plt.xlabel(r'$t$')
+#plt.ylabel(r'Integral Flux')
+#plt.show()
 
 
 # Flux - average
