@@ -60,6 +60,13 @@ for k in range(K):
         phi_edge[k,j] = quad(phi,x0,x1,args=(t1))[0]/dx
         phi_avg[k,j]  = quad(phiX,x0,x1,args=(t0,t1))[0]/dx/dt
 
+for j in range(J+1):
+    for k in range(K):
+        t0 = t[k]
+        t1 = t[k+1]
+        dt = t1-t0
+        phi_face[k,j] = quad(phi_t,t0,t1,args=(x[j]))[0]/dt
+
 
 phi_edge = np.nan_to_num(phi_edge)
 phi_face = np.nan_to_num(phi_face)

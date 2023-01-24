@@ -19,9 +19,14 @@ J     = len(x_mid)
 
 data = np.load('reference.npz')
 phi_ref = data['phi']
+phi_t_ref = data['phi_t']
+phi_t_ref[1:]=phi_t_ref[:-1]
+phi_t_ref[0,:]=0
+phi_t_ref[0,100]=1
 
 for k in range(K):
     phi_ref[k] = phi_ref[k]/np.max(phi_ref[k])
+    phi_t_ref[k] = phi_t_ref[k]/np.max(phi_t_ref[k])
 
 # =============================================================================
 # Print results
@@ -52,4 +57,6 @@ with open('WWs.txt', 'w') as outfile:
     phi_ref[1:]=phi_ref[:-1] #Use weight windows from previous time step
     outfile.write('WW behind 1 time step\n')
     print_var(outfile, phi_ref)
+    outfile.write('WW from solution at beginning of time step\n')
+    print_var(outfile, phi_t_ref)
 

@@ -46,17 +46,21 @@ mcdc.setting(N_particle=1E5,
 
 
 data = np.load('reference.npz')
-#phi_t_ref = data['phi_t']
 phi_ref = data['phi']
+phi_t_ref = data['phi_t']
+phi_t_ref[1:]=phi_t_ref[:-1]
+phi_t_ref[0,:]=0
+phi_t_ref[0,100]=1
 for k in range(20):
     phi_ref[k] = phi_ref[k]/np.max(phi_ref[k])
+    phi_t_ref[k] = phi_t_ref[k]/np.max(phi_t_ref[k])
 #phi_ref[1:]=phi_ref[:-1] #Use weight windows from previous time step
 mcdc.weight_window(
            x=np.linspace(-20.1, 20.1, 202), 
            t=t,
-           rho=2.0,
+           rho=16.0,
            wwtype='isotropic',
-           window=phi_ref)
+           window=phi_t_ref)
 
 mcdc.census(t=t[1:], pct="combing")
 
