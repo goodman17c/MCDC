@@ -42,7 +42,7 @@ mcdc.setting(N_particle=1E5,
 #             rng_seed=123,
              time_boundary=20.1,
              active_bank_buff=2E7,
-             census_bank_buff=1E3)
+             census_bank_buff=1E4)
 
 
 data = np.load('reference.npz')
@@ -58,11 +58,12 @@ for k in range(20):
 mcdc.weight_window(
            x=np.linspace(-20.1, 20.1, 202), 
            t=t,
-           rho=1.0,
+           rho=16.0,
            wwtype='isotropic',
            window=phi_ref)
 
 #mcdc.census(t=t[1:], pct="combing")
+mcdc.census(t=t[1:])
 
 # Run
 mcdc.run()

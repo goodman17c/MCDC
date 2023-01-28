@@ -16,7 +16,7 @@ __pycache__
 # Output
 output*.h5
 *.png
-*.mp4
+#*.mp4
 
 # Cluster job
 *.out
