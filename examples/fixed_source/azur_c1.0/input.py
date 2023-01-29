@@ -54,16 +54,16 @@ phi_t_ref[0,100]=1
 for k in range(20):
     phi_ref[k] = phi_ref[k]/np.max(phi_ref[k])
     phi_t_ref[k] = phi_t_ref[k]/np.max(phi_t_ref[k])
-#phi_ref[1:]=phi_ref[:-1] #Use weight windows from previous time step
+phi_ref[1:]=phi_ref[:-1] #Use weight windows from previous time step
 mcdc.weight_window(
            x=np.linspace(-20.1, 20.1, 202), 
            t=t,
-           rho=16.0,
+           rho=8.0,
            wwtype='isotropic',
            window=phi_ref)
 
 #mcdc.census(t=t[1:], pct="combing")
-mcdc.census(t=t[1:])
+#mcdc.census(t=t[1:])
 
 # Run
 mcdc.run()
