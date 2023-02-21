@@ -31,13 +31,15 @@ def add_to_plot(i, j, k):
         phi      = f['tally/flux/mean'][:]
         phi_sd   = f['tally/flux/sdev'][:]
         n        = f['tally/n/mean'][:]
-        n_sd     = f['tally/n/sdev'][:]
+        n_t     = f['tally/n-t/mean'][:]
         for k in range(K):
             phi[k]      /= (dx*dt[k])
             phi_sd[k]   /= (dx*dt[k])
 
         FOM = phi_ref*phi_ref/phi_sd/phi_sd/np.sum(n)
         FOM[n==0]=0
+        n_int=np.sum(n,1)
+        n_t_int=np.sum(n_t,1)
 
         max_rel_err=np.zeros(K)
         err_inf =np.zeros(K)
@@ -67,18 +69,18 @@ def add_to_plot(i, j, k):
             
             FOM_L2[k] = np.sqrt(np.sum(np.power(FOM[k],2)*dx))
 
-        plt.semilogy(t_mid,FOM_L2,label=file)
+        plt.semilogy(t,n_t_int,label=file)
 
 # =============================================================================
 # Animate results
 # =============================================================================
 
-add_to_plot(0,0,3)
-add_to_plot(1,0,3)
-add_to_plot(2,0,3)
-add_to_plot(0,1,3)
-add_to_plot(1,1,3)
-add_to_plot(2,1,3)
+add_to_plot(0,0,2)
+add_to_plot(1,0,2)
+add_to_plot(2,0,2)
+add_to_plot(0,1,2)
+add_to_plot(1,1,2)
+add_to_plot(2,1,2)
 plt.grid()
 plt.legend()
 plt.xlabel(r'$t$')

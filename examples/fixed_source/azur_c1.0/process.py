@@ -27,7 +27,7 @@ with h5py.File('output.h5', 'r') as f:
     phi      = f['tally/flux/mean'][:]
     phi_sd   = f['tally/flux/sdev'][:]
     n        = f['tally/n/mean'][:]
-    n_sd     = f['tally/n/sdev'][:]
+    n_t        = f['tally/n-t/mean'][:]
 for k in range(K):
     phi[k]      /= (dx*dt[k])
     phi_sd[k]   /= (dx*dt[k])
@@ -40,8 +40,9 @@ w_avg = phi/n
 w_avg[n==0] = 0
 
 #Calculate Integral quatities
-phi_int=np.mean(phi,1)*40
-n_int=np.mean(n,1)*40
+phi_int=np.mean(phi,1)*40.2
+n_int=np.sum(n,1)
+n_t_int=np.sum(n_t,1)
 
 max_rel_err=np.zeros(K)
 err_inf =np.zeros(K)
@@ -107,6 +108,8 @@ with open('output.txt', 'w') as outfile:
     print_int(outfile, phi_int)
     outfile.write('integral n  ')
     print_int(outfile, n_int)
+    outfile.write('integral n_t')
+    print_int(outfile, n_int)
 #    outfile.write('int total w ')
 #    print_int(outfile, total_w_int)
     outfile.write('Max Rel Err ')
@@ -143,6 +146,8 @@ with open('output.txt', 'w') as outfile:
     print_var(outfile, n)
     outfile.write('FOM\n')
     print_var(outfile, FOM)
+    outfile.write('n_t\n')
+    print_var(outfile, n_t)
 
 # =============================================================================
 # Animate results
