@@ -9,6 +9,8 @@ from mcdc.constant import *
 from mcdc.print_   import print_error
 from mcdc.type_    import score_list
 
+from scipy.integrate import quad
+
 #==============================================================================
 # Random sampling
 #==============================================================================
@@ -2122,32 +2124,45 @@ def time_boundary(P, mcdc):
     
 @njit
 def weight_window(P, mcdc):
-    # Get indices
-    t, x, y, z, outside = mesh_get_index(P, mcdc['technique']['ww_mesh'])
+    c = 1.1
+    i = complex(0,1)
+    x = P['x']
+    t = P['t']
+    if t == 0.0 or abs(x) >= t:
+        if abs(x) > t:
+            print('Error')
+        w_target = 0.0
+    else:
+        eta = x/t
+        integral = quad(integrand,0.0,np.pi,args=(eta,t))[0]
+        w_target = np.e**-t/2/t*(1+c*t/4/np.pi*(1-eta**2)*integral)
+    if (True):
+ #   # Get indices
+ #   t, x, y, z, outside = mesh_get_index(P, mcdc['technique']['ww_mesh'])
 
-    if (not outside):
+ #   if (not outside):
 
-        # Target weight
-        #Isotropic Weights
-        if (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_ISOTROPIC):
-            w_target = mcdc['technique']['ww'][t,x,y,z]
-        #Minerbo Weights
-        elif (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_MINERBO):
-            w_target = mcdc['technique']['ww'][t,x,y,z]
-            Bx=mcdc['technique']['wwBx'][t,x,y,z]
-            By=mcdc['technique']['wwBy'][t,x,y,z]
-            Bz=mcdc['technique']['wwBz'][t,x,y,z]
-            w_target=w_target*math.exp(P['ux']*Bx+P['uy']*By+P['uz']*Bz)
-        #Octant Weights
-        elif (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_OCTANT):
-            octant=0 
-            if (P['ux'] < 0):
-                octant += 1
-            if (P['uy'] < 0):
-                octant += 2
-            if (P['uz'] < 0):
-                octant += 4
-            w_target = mcdc['technique']['wwo'][t,x,y,z,octant]
+ #       # Target weight
+ #       #Isotropic Weights
+ #       if (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_ISOTROPIC):
+ #           w_target = mcdc['technique']['ww'][t,x,y,z]
+ #       #Minerbo Weights
+ #       elif (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_MINERBO):
+ #           w_target = mcdc['technique']['ww'][t,x,y,z]
+ #           Bx=mcdc['technique']['wwBx'][t,x,y,z]
+ #           By=mcdc['technique']['wwBy'][t,x,y,z]
+ #           Bz=mcdc['technique']['wwBz'][t,x,y,z]
+ #           w_target=w_target*math.exp(P['ux']*Bx+P['uy']*By+P['uz']*Bz)
+ #       #Octant Weights
+ #       elif (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_OCTANT):
+ #           octant=0 
+ #           if (P['ux'] < 0):
+ #               octant += 1
+ #           if (P['uy'] < 0):
+ #               octant += 2
+ #           if (P['uz'] < 0):
+ #               octant += 4
+ #           w_target = mcdc['technique']['wwo'][t,x,y,z,octant]
 
         # Check if no weight windows in cell
         if (w_target > 0):
@@ -2184,6 +2199,14 @@ def weight_window(P, mcdc):
                     P['alive'] = False
                 else:
                     P['w'] = w_target
+
+@njit
+def integrand(u,eta,t):
+    c = 1.1
+    i = complex(0,1)
+    q   = (1+eta)/(1-eta)
+    xi = (np.log(q)+i*u)/(eta+i*np.tan(u/2))
+    return 1.0/(np.cos(u/2))**2*(xi**2*np.e**(c*t/2*(1-eta**2)*xi)).real
 
 #==============================================================================
 # Miscellany

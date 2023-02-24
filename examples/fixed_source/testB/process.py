@@ -5,9 +5,10 @@ import h5py
 
 Nt= [20, 40, 80]
 ref=["reference.npz", "reference_40.npz", "reference_80.npz"]
-for Nti in range(3):
-	for fj in range(4):
-		output="1a_"+str(2**fj)+"_"+str(Nt[Nti])
+for Nti in range(1):
+	for fj in range(1):
+		#output="1a_"+str(2**fj)+"_"+str(Nt[Nti])
+		output="output"
 
 		# =============================================================================
 		# Reference solution (SS)
