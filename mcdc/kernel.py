@@ -238,10 +238,9 @@ def update_weight_window(mcdc):
         Edd = mcdc['tally']['score']['eddington']['mean'][0,t,:,0,0,0]
         Edd[Edd==0] = 0.33
 
-        phi, J = det.QD1D(mcdc, phi, J[1:-1], Edd)
-        phi /= np.amax(phi)
-        print(phi)
-        mcdc['technique']['ww'][t+1,:,0,0] = phi
+        phi, J = det.QD1D(mcdc, phi, J, Edd)
+        phi /= np.nanmax(phi)
+        mcdc['technique']['ww'][t+1,:,0,0] = phi[1:-1]
 
 
 @njit
@@ -703,7 +702,7 @@ def pct_combing(mcdc):
     td = N/M
 
     # Population Control Factor
-    mcdc['technique']['ww'][mcdc['technique']['census_idx']:] *= td
+    mcdc['technique']['pc_factor'] *= td
 
     # Tooth offset
     xi     = rng(mcdc)
@@ -776,7 +775,7 @@ def pct_combing_ww(mcdc):
     td = W/M
     
     # Population Control Factor
-    mcdc['technique']['ww'][mcdc['technique']['census_idx']:] *= td
+    mcdc['technique']['pc_factor'] *= td
     
     # Tooth offset
     xi     = rng(mcdc)
@@ -2348,7 +2347,10 @@ def weight_window(P, mcdc):
 
         # Check if no weight windows in cell
         if (w_target > 0):
-            
+
+            # Population control factor
+            w_target *= mcdc['technique']['pc_factor']
+
             # Surviving probability
             p = P['w']/w_target
         

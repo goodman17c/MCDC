@@ -111,6 +111,7 @@ class InputCard:
                           'IC_generator'         : False,
                           'population_control'   : False,
                           'pct'                  : PCT_NONE,
+                          'pc_factor'            : 1.0,
                           'ww'                   : np.ones([1,1,1,1]), 
                           'wwBx'                 : np.zeros([1,1,1,1]), 
                           'wwBy'                 : np.zeros([1,1,1,1]), 

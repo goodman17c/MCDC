@@ -303,6 +303,7 @@ def make_type_technique(card):
     # Window
     struct += [('wwo', float64, (Nt, Nx, Ny, Nz, 8))]
     
+    struct += [('pc_factor', float64)]
     struct += [('auto_ww', int64)]
 
     # =========================================================================
