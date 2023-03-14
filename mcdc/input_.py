@@ -700,6 +700,10 @@ def population_control(pct='combing'):
         card['pct'] = PCT_COMBING
     elif pct == 'combing-weight':
         card['pct'] = PCT_COMBING_WEIGHT
+    elif pct == 'combing-ww':
+        card['pct'] = PCT_COMBING_WW
+    elif pct == 'combing-wwprev':
+        card['pct'] = PCT_COMBING_WWPREV
     else:
         print_error("Unknown PCT type " + pct)
 
@@ -714,6 +718,15 @@ def census(t, pct='none'):
     card['census_time'] = t
     if pct != 'none':
         population_control(pct)
+
+def auto_ww(method='manual'):
+    card = mcdc.input_card.technique
+    if (method == 'manual'):
+        card['auto_ww'] = MANUAL_WEIGHT_WINDOW
+    elif (method == 'mcclaren'):
+        card['auto_ww'] = MCCLAREN_WEIGHT_WINDOW
+    elif (method == 'cooper'):
+        card['auto_ww'] = COOPER_WEIGHT_WINDOW
 
 def weight_window(wwtype="isotropic",x=None, y=None, z=None, t=None, window=None,
                   rho=None, Bx=None, By=None, Bz=None):
