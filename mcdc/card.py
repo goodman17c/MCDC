@@ -1,6 +1,6 @@
 import numpy as np
 
-from mcdc.constant import INF, GR_ALL, PCT_NONE, PI, WEIGHT_WINDOW_ISOTROPIC
+from mcdc.constant import *
 
 class InputCard:
     def __init__(self):
@@ -106,6 +106,7 @@ class InputCard:
                           'weight_window'        : False,
                           'weight_window_type'   : WEIGHT_WINDOW_ISOTROPIC,
                           'weight_window_rho'    : 1.0,
+                          'auto_ww'              : MANUAL_WEIGHT_WINDOW,
                           'time_census'          : False,
                           'IC_generator'         : False,
                           'population_control'   : False,

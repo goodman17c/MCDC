@@ -324,3 +324,12 @@ def generate_hdf5():
                 Np = mcdc['technique']['IC_bank_precursor']['size']
                 f.create_dataset("IC/neutron",data=mcdc['technique']['IC_bank_neutron']['content'][:Nn])
                 f.create_dataset("IC/precursor",data=mcdc['technique']['IC_bank_precursor']['content'][:Np])
+
+            if mcdc['technique']['weight_window']:
+                f.create_dataset("ww/grid/t", data=mcdc['technique']['ww_mesh']['t'])
+                f.create_dataset("ww/grid/x", data=mcdc['technique']['ww_mesh']['x'])
+                f.create_dataset("ww/grid/y", data=mcdc['technique']['ww_mesh']['y'])
+                f.create_dataset("ww/grid/z", data=mcdc['technique']['ww_mesh']['z'])
+                f.create_dataset("ww/center", data=mcdc['technique']['ww'])
+                f.create_dataset("ww/width", data=mcdc['technique']['weight_window_rho'])
+

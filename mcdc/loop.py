@@ -42,6 +42,11 @@ def loop_main(mcdc):
         # Time census closeout
         elif mcdc['technique']['time_census'] and \
              mcdc['technique']['census_idx'] < len(mcdc['technique']['census_time'])-1:
+           
+            # Automated Weight Window Technique
+            if mcdc['technique']['auto_ww'] != MANUAL_WEIGHT_WINDOW:
+                kernel.update_weight_window(mcdc)
+
             # Manage particle banks
             kernel.manage_particle_banks(mcdc)
 
@@ -53,7 +58,12 @@ def loop_main(mcdc):
             simulation_end = True
 
     # Tally closeout
-    kernel.tally_closeout(mcdc)    
+    if mcdc['technique']['auto_ww'] == MANUAL_WEIGHT_WINDOW:
+        kernel.tally_closeout(mcdc)
+    else:
+        kernel.tally_closeout_timestep(mcdc)
+        mcdc['technique']['census_idx'] += 1
+        kernel.tally_closeout_endtimestep(mcdc)
 
 
 # =============================================================================

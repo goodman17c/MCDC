@@ -4,6 +4,7 @@ from mpi4py import MPI
 from numba  import njit, objmode, literal_unroll
 
 import mcdc.type_ as type_
+import mcdc.deterministic as det
 
 from mcdc.constant import *
 from mcdc.print_   import print_error
@@ -219,6 +220,30 @@ def get_particle(bank):
     return P
 
 @njit
+def update_weight_window(mcdc):
+    t = mcdc['technique']['census_idx']
+    #compute tallies for last time step
+    tally_closeout_timestep(mcdc)
+
+    #use tallies for automated weight window update method
+    if mcdc['technique']['auto_ww'] == MCCLAREN_WEIGHT_WINDOW:
+        #gather scalar flux
+        #print(mcdc['tally']['flux']['mean'])
+        ww = mcdc['tally']['score']['flux']['mean'][0,t,:,:,:,0,0]
+        mcdc['technique']['ww'][t+1,:,:,:] = ww/np.max(ww)
+    if mcdc['technique']['auto_ww'] == COOPER_WEIGHT_WINDOW:
+        #gather scalar flux
+        phi = mcdc['tally']['score']['flux']['mean'][0,t,:,0,0,0,0]
+        J = mcdc['tally']['score']['current_x']['mean'][0,t,:,0,0,0]
+        Edd = mcdc['tally']['score']['eddington']['mean'][0,t,:,0,0,0]
+        Edd[Edd==0] = 0.33
+
+        phi, J = det.QD1D(mcdc, phi, J, Edd)
+        phi /= np.nanmax(phi)
+        mcdc['technique']['ww'][t+1,:,0,0] = phi[1:-1]
+
+
+@njit
 def manage_particle_banks(mcdc):
     # Record time
     if mcdc['mpi_master']:
@@ -370,10 +395,39 @@ def bank_scanning(bank, mcdc):
 @njit
 def bank_scanning_weight(bank, mcdc):
     # Local weight CDF
-    N_local = bank['size']
+    N_local = int(bank['size'])
     w_cdf   = np.zeros(N_local+1)
     for i in range(N_local):
         w_cdf[i+1] = w_cdf[i] + bank['particles'][i]['w']
+    W_local = w_cdf[-1]
+
+    # Starting weight
+    buff = np.zeros(1, dtype=np.float64)
+    with objmode():
+        MPI.COMM_WORLD.Exscan(np.array([W_local]), buff, MPI.SUM)
+    w_start = buff[0]
+    w_cdf += w_start
+
+    # Global weight
+    buff[0] = w_cdf[-1]
+    with objmode():
+        MPI.COMM_WORLD.Bcast(buff, mcdc['mpi_size']-1)
+    W_global = buff[0]
+
+    return w_start, w_cdf, W_global
+
+@njit
+def bank_scanning_ww(bank, mcdc):
+    # Local weight CDF
+    N_local = int(bank['size'])
+    w_cdf   = np.zeros(N_local+1)
+    for i in range(N_local):
+        P = bank['particles'][i]
+        t, x, y, z, outside = mesh_get_index(P, mcdc['technique']['ww_mesh'])
+        if (mcdc['technique']['pct'] == PCT_COMBING_WWPREV):
+            t = t-1
+        w_target = mcdc['technique']['ww'][t,x,y,z]*mcdc['technique']['pc_factor']
+        w_cdf[i+1] = w_cdf[i] + P['w']/w_target
     W_local = w_cdf[-1]
 
     # Starting weight
@@ -627,6 +681,12 @@ def population_control(mcdc):
     elif mcdc['technique']['pct'] == PCT_COMBING_WEIGHT:
         pct_combing_weight(mcdc)
         rng_rebase(mcdc)
+    elif mcdc['technique']['pct'] == PCT_COMBING_WW:
+        pct_combing_ww(mcdc)
+        rng_rebase(mcdc)
+    elif mcdc['technique']['pct'] == PCT_COMBING_WWPREV:
+        pct_combing_ww(mcdc)
+        rng_rebase(mcdc)
 
 @njit
 def pct_combing(mcdc):
@@ -676,9 +736,6 @@ def pct_combing_weight(mcdc):
 
     # Teeth distance
     td = W/M
-    
-    # Population Control Factor
-    mcdc['technique']['pc_factor'] *= td
 
     # Tooth offset
     xi     = rng(mcdc)
@@ -700,6 +757,49 @@ def pct_combing_weight(mcdc):
         # Set weight
         P['w'] = td
         add_particle(P, bank_source)
+
+
+#WIP Does not preserve solution integrity
+@njit
+def pct_combing_ww(mcdc):
+    bank_census = mcdc['bank_census']
+    M           = mcdc['setting']['N_particle']
+    bank_source = mcdc['bank_source']
+    
+    # Scan the bank based on weight
+    w_start, w_cdf, W = bank_scanning_ww(bank_census, mcdc)
+    _, _, W_total = bank_scanning_weight(bank_census, mcdc)
+    w_end = w_cdf[-1]
+
+    # Teeth distance
+    td = W/M
+    
+    # Population Control Factor
+    mcdc['technique']['pc_factor'] *= td
+    
+    # Tooth offset
+    xi     = rng(mcdc)
+    offset = xi*td
+
+    # First hiting tooth
+    tooth_start = math.ceil((w_start-offset)/td)
+
+    # Last hiting tooth
+    tooth_end = math.floor((w_end-offset)/td) + 1
+    
+    # Locally sample particles from census bank
+    bank_source['size'] = 0
+    idx = 0
+    for i in range(tooth_start, tooth_end):
+        tooth = i*td+offset
+        idx   += binary_search(tooth,w_cdf[idx:])
+        P = copy_particle(bank_census['particles'][idx])
+        add_particle(P, bank_source)
+    
+    _, _, W_total_new = bank_scanning_weight(bank_source, mcdc)
+    for i in range(bank_source['size']):
+        bank_source['particles'][i]['w'] *= W_total/W_total_new
+        
 '''
 @njit
 def pct_IC_neutron(mcdc):
@@ -1356,6 +1456,26 @@ def score_closeout(score, mcdc):
     score['sdev'][:] = \
             np.sqrt((score['sdev']/N_history - np.square(score['mean']))\
             /(N_history-1))
+
+@njit
+def score_closeout_timestep(score, mcdc):
+    N_history = mcdc['setting']['N_particle']
+    t = mcdc['technique']['census_idx']
+
+    # MPI AllReduce
+    buff    = np.zeros_like(score['mean'][:,t])
+    buff_sq = np.zeros_like(score['sdev'][:,t])
+    with objmode():
+        MPI.COMM_WORLD.Allreduce(np.array(score['mean'][:,t]), buff, MPI.SUM)
+        MPI.COMM_WORLD.Allreduce(np.array(score['sdev'][:,t]), buff_sq, MPI.SUM)
+    score['mean'][:,t] = buff
+    score['sdev'][:,t] = buff_sq
+   
+    # Store results
+    score['mean'][:,t] = score['mean'][:,t]/N_history
+    score['sdev'][:,t] = \
+            np.sqrt((score['sdev'][:,t]/N_history - np.square(score['mean'][:,t]))\
+            /(N_history-1))
     
 
 @njit
@@ -1373,6 +1493,22 @@ def tally_closeout(mcdc):
     for name in literal_unroll(score_list):
         if tally[name]:
             score_closeout(tally['score'][name], mcdc)
+
+@njit
+def tally_closeout_timestep(mcdc):
+    tally = mcdc['tally']
+
+    for name in literal_unroll(score_list):
+        if tally[name]:
+            score_closeout_timestep(tally['score'][name], mcdc)
+
+@njit
+def tally_closeout_endtimestep(mcdc):
+    tally = mcdc['tally']
+
+    for name in literal_unroll(score_list):
+        if (tally[name] and np.ma.size(tally['score'][name]['mean'],1) > mcdc['technique']['census_idx']):
+            score_closeout_timestep(tally['score'][name], mcdc)
 
 #==============================================================================
 # Global tally operations
@@ -2121,9 +2257,70 @@ def time_boundary(P, mcdc):
 #==============================================================================
 # Weight window
 #==============================================================================
+
+@njit
+def get_weight_window(P, mcdc):
+#    c = 1.1
+#    i = complex(0,1)
+#    x = P['x']
+#    t = P['t']
+#    if t == 0.0 or abs(x) >= t:
+#        if abs(x) > t:
+#            print('Error')
+#        w_target = 0.0
+#    else:
+#        eta = x/t
+#        integral = quad(integrand,0.0,np.pi,args=(eta,t))[0]
+#        w_target = np.e**-t/2/t*(1+c*t/4/np.pi*(1-eta**2)*integral)
+#    if (True):
+    # Get indices
+    t, x, y, z, outside = mesh_get_index(P, mcdc['technique']['ww_mesh'])
+    print(t)
+    w_target = 0
+    if (not outside):
+
+        # Target weight
+        #Isotropic Weights
+        if (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_ISOTROPIC):
+            w_target = mcdc['technique']['ww'][t,x,y,z]
+        #Minerbo Weights
+        elif (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_MINERBO):
+            w_target = mcdc['technique']['ww'][t,x,y,z]
+            Bx=mcdc['technique']['wwBx'][t,x,y,z]
+            By=mcdc['technique']['wwBy'][t,x,y,z]
+            Bz=mcdc['technique']['wwBz'][t,x,y,z]
+            w_target=w_target*math.exp(P['ux']*Bx+P['uy']*By+P['uz']*Bz)
+        #Octant Weights
+        elif (mcdc['technique']['weight_window_type'] == WEIGHT_WINDOW_OCTANT):
+            octant=0 
+            if (P['ux'] < 0):
+                octant += 1
+            if (P['uy'] < 0):
+                octant += 2
+            if (P['uz'] < 0):
+                octant += 4
+            w_target = mcdc['technique']['wwo'][t,x,y,z,octant]
+
+    return w_target
     
 @njit
 def weight_window(P, mcdc):
+<<<<<<< HEAD
+=======
+#    c = 1.1
+#    i = complex(0,1)
+#    x = P['x']
+#    t = P['t']
+#    if t == 0.0 or abs(x) >= t:
+#        if abs(x) > t:
+#            print('Error')
+#        w_target = 0.0
+#    else:
+#        eta = x/t
+#        integral = quad(integrand,0.0,np.pi,args=(eta,t))[0]
+#        w_target = np.e**-t/2/t*(1+c*t/4/np.pi*(1-eta**2)*integral)
+#    if (True):
+>>>>>>> 76ddeee58c8f89c91dbb76457a8919e9ef0b74a1
     # Get indices
     t, x, y, z, outside = mesh_get_index(P, mcdc['technique']['ww_mesh'])
 
@@ -2153,7 +2350,7 @@ def weight_window(P, mcdc):
 
         # Check if no weight windows in cell
         if (w_target > 0):
-            
+
             # Population control factor
             w_target *= mcdc['technique']['pc_factor']
 
