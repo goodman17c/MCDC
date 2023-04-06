@@ -242,6 +242,7 @@ def update_weight_window(mcdc):
         phi=np.append(phi,0)
         phi, J = det.QD1D(mcdc, phi, J, Edd)
         phi /= np.nanmax(phi)
+        #print(phi)
         mcdc['technique']['ww'][t+1,:,0,0] = phi
 
 
