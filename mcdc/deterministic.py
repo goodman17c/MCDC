@@ -1,12 +1,4 @@
-import math
-
-from mpi4py import MPI
-from numba  import njit, objmode, literal_unroll
-
-import matplotlib.pyplot as plt
-
 import numpy as np
-
 
 #Quasidiffusion
 def QD1D(mcdc, phi_in, J_in, Edd_in):
@@ -23,15 +15,28 @@ def QD1D(mcdc, phi_in, J_in, Edd_in):
     sigmaA = mcdc['materials'][0]['capture'][0]
     sigmaF = mcdc['materials'][0]['fission'][0]
     nu = mcdc['materials'][0]['nu_p'][0]
+    sigmaS = mcdc['materials'][0]['scatter'][0] + nu*sigmaF
     v = mcdc['materials'][0]['speed'][0]
+    q=0
 
+    dt2 = dt
     Edd2 = np.zeros((Nx+2,))
     Edd2[0] = Edd_in[0]
     Edd2[1:-1] = Edd_in[:]
     Edd2[-1] = Edd_in[-1]
     
-    #solve for phi
-    phi = np.zeros((Nx+2,))
+    #0 BC
+    phiLin=0
+    phiRin=0
+    JLin=0
+    JRin=0
+    CL=0
+    CR=0
+
+
+		#solve for phi
+    phi = np.zeros((Nx,))
+    phi_edge = np.zeros((Nx+1,))
     J = np.zeros((Nx+1,))
                 
     #build tridiagonal matrix for cell
@@ -43,7 +48,7 @@ def QD1D(mcdc, phi_in, J_in, Edd_in):
     f[-1] = CR
     d = np.zeros((Nx+2,))
     d[0] = JLin-CL*phiLin-J_in[0]/v/dt2/(sigmaT+1/v/dt2)
-    d[1:-1] = dx*(q+phi_in/v/dt2)+(1/v/dt2)/(sigmaT+1/v/dt2)*(J_in[:-1]-J_in[1:])
+    d[1:-1] = dx*(q+phi_in[1:-1]/v/dt2)+(1/v/dt2)/(sigmaT+1/v/dt2)*(J_in[:-1]-J_in[1:])
     d[-1] = CR*phiRin-JRin+J[s,-1]/v/dt2/(sigmaT+1/v/dt2)
     #solve for scalar flux using thomas algorithm
     aa = np.copy(-a)
@@ -86,20 +91,3 @@ def QD1D(mcdc, phi_in, J_in, Edd_in):
         res2[i+1] = Edd2[i+2]*phi[i+1]-Edd2[i+1]*phi[i]+sigmaT*dx2[i+1]*J[i+1]+dx2[i+1]/v/dt2*(J[i+1]-J_in[i+1])
 
     return phi, J
-
-#Step characteristics 1D transport
-def step_char(mcdc, phi, J):
-    
-    t = mcdc['technique']['ww_mesh']['t']
-    x = mcdc['technique']['ww_mesh']['x']
-    dx = x[1:]-x[:-1]
-    dt = t[mcdc['technique']['census_idx']+1]-t[mcdc['technique']['census_idx']]
-    Nx = len(dx)
-    sigmaT = mcdc['materials'][0]['total'][0]
-    sigmaA = mcdc['materials'][0]['capture'][0]
-    sigmaF = mcdc['materials'][0]['fission'][0]
-    nu = mcdc['materials'][0]['nu'][0]
-    v = mcdc['materials'][0]['speed'][0]
-    
-
-    return phi, J, Edd

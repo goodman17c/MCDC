@@ -237,7 +237,9 @@ def update_weight_window(mcdc):
         J = mcdc['tally']['score']['current_x']['mean'][0,t,:,0,0,0]
         Edd = mcdc['tally']['score']['eddington']['mean'][0,t,:,0,0,0]
         Edd[Edd==0] = 0.33
-
+        #0 BC
+        phi=np.insert(phi,0,0)
+        phi=np.append(phi,0)
         phi, J = det.QD1D(mcdc, phi, J, Edd)
         phi /= np.nanmax(phi)
         mcdc['technique']['ww'][t+1,:,0,0] = phi[1:-1]
@@ -698,9 +700,10 @@ def pct_combing(mcdc):
     idx_start, N_local, N = bank_scanning(bank_census, mcdc)
     idx_end = idx_start + N_local
 		
-		if (N==0):
+    if (N==0):
+        print("Simulation Ended Early")
         bank_source['size'] = 0
-		    simulation_end = True
+        simulation_end = True
         return
 
     # Teeth distance
@@ -2321,7 +2324,8 @@ def weight_window(P, mcdc):
 #    else:
 #        eta = x/t
 #        integral = quad(integrand,0.0,np.pi,args=(eta,t))[0]
-#        w_target = np.e**-t/2/t*(1+c*t/4/np.pi*(1-eta**2)*integral)
+#        integral2 = quad(integrand,0.0,np.pi,args=(0,t))[0]
+#        w_target = (np.e**-t/2/t*(1+c*t/4/np.pi*(1-eta**2)*integral))/(np.e**-t/2/t*(1+c*t/4/np.pi*integral2))
 #    if (True):
     # Get indices
     t, x, y, z, outside = mesh_get_index(P, mcdc['technique']['ww_mesh'])
@@ -2385,6 +2389,14 @@ def weight_window(P, mcdc):
                     P['alive'] = False
                 else:
                     P['w'] = w_target
+
+@njit
+def integrand(u,eta,t):
+    c = 1.1
+    i = complex(0,1)
+    q   = (1+eta)/(1-eta)
+    xi = (np.log(q)+i*u)/(eta+i*np.tan(u/2))
+    return 1.0/(np.cos(u/2))**2*(xi**2*np.e**(c*t/2*(1-eta**2)*xi)).real
 
 #==============================================================================
 # Miscellany
