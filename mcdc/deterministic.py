@@ -86,7 +86,7 @@ def QD1D(mcdc, phi_in, J_in, Edd_in):
 
     #residuals
     for i in range(Nx):
-        res1[i] = J[i+1]-J[i] + (1/v/dt2+(sigmaT-sigmaS))*dx[i]*phi[i]-dx[i]/v/dt2*phi_in[i]-q*dx[i]
+        res1[i] = J[i+1]-J[i] + (1/v/dt2+(sigmaT-sigmaS))*dx[i]*phi[i]-dx[i]/v/dt2*phi_in[i+1]-q*dx[i]
     
     res2[0] = Edd2[1]*phi[0]-Edd2[0]*phi_in[0]+sigmaT*dx2[0]*J[0]+dx2[0]/v/dt2*(J[0]-J_in[0])
     res2[-1] = Edd2[-1]*phi_in[-1]-Edd2[-2]*phi[-1]+sigmaT*dx2[-1]*J[-1]+dx2[-1]/v/dt2*(J[-1]-J_in[-1])

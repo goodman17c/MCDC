@@ -44,15 +44,14 @@ for i in range(3):
 		# Setting
 		mcdc.setting(N_particle=1E3,
 								 time_boundary=20.1,
-								 active_bank_buff=2E7,
-								 census_bank_buff=1E5,
+								 active_bank_buff=2E5,
+								 census_bank_buff=1E4,
 								 output="9_"+str(2**j)+"_"+str(Nt[i])
 	)
 
 
 		phi_ref=np.zeros([Nt[i], 201])
 		phi_ref[0,100]=1
-		mcdc.auto_ww(method='cooper')
 		mcdc.weight_window(
 							 x=np.linspace(-20.1, 20.1, 202), 
 							 t=t,
@@ -60,6 +59,7 @@ for i in range(3):
 							 wwtype='isotropic',
 							 window=phi_ref)
 		mcdc.implicit_capture()
+		mcdc.auto_ww(method='cooper')
 		mcdc.census(t=t[1:], pct="combing")
 
 		# Run
