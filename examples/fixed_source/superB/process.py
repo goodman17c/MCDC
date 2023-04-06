@@ -7,7 +7,7 @@ Nt= [20, 40, 80]
 ref=["reference.npz", "reference_40.npz", "reference_80.npz"]
 for Nti in range(3):
 	for fj in range(4):
-		output="3_"+str(2**fj)+"_"+str(Nt[Nti])
+		output="4_"+str(2**fj)+"_"+str(Nt[Nti])
 		#output="output"
 
 		# =============================================================================
