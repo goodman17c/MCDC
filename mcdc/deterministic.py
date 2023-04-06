@@ -38,6 +38,9 @@ def QD1D(mcdc, phi_in, J_in, Edd_in):
     phi = np.zeros((Nx,))
     phi_edge = np.zeros((Nx+1,))
     J = np.zeros((Nx+1,))
+    
+    res1 = np.zeros((Nx,))
+    res2 = np.zeros((Nx+1,))
                 
     #build tridiagonal matrix for cell
     a = (Edd2[:-1]/dx2/(1/v/dt2+sigmaT))
@@ -49,7 +52,7 @@ def QD1D(mcdc, phi_in, J_in, Edd_in):
     d = np.zeros((Nx+2,))
     d[0] = JLin-CL*phiLin-J_in[0]/v/dt2/(sigmaT+1/v/dt2)
     d[1:-1] = dx*(q+phi_in[1:-1]/v/dt2)+(1/v/dt2)/(sigmaT+1/v/dt2)*(J_in[:-1]-J_in[1:])
-    d[-1] = CR*phiRin-JRin+J[s,-1]/v/dt2/(sigmaT+1/v/dt2)
+    d[-1] = CR*phiRin-JRin+J_in[-1]/v/dt2/(sigmaT+1/v/dt2)
     #solve for scalar flux using thomas algorithm
     aa = np.copy(-a)
     bb = np.copy(f)
