@@ -36,7 +36,7 @@ def add_to_plot(i, j, k):
 						phi[k]      /= (dx*dt[k])
 						phi_sd[k]   /= (dx*dt[k])
 
-				FOM = phi_ref*phi_ref/phi_sd/phi_sd/np.sum(n)
+				FOM = phi*phi/phi_sd/phi_sd/np.sum(n)
 				FOM[n==0]=0
 				phi_int=np.sum(n,1)
 				n_int=np.sum(n,1)
@@ -70,6 +70,7 @@ def add_to_plot(i, j, k):
 						
 						FOM_L2[k] = np.sqrt(np.sum(np.power(FOM[k],2)*dx))
 
+				#plt.semilogy(t_mid,FOM_L2,label=file)
 				plt.semilogy(t_mid,rel_err_L2,label=file)
 				#plt.semilogy(t_mid,stat_err,label=file)
 				#plt.semilogy(t,n_t_int,label=file)
@@ -78,13 +79,16 @@ def add_to_plot(i, j, k):
 # Animate results
 # =============================================================================
 
-for i in range(4):
-	for j in range(3):
-		add_to_plot(1,i,j)
-		add_to_plot(2,i,j)
+#for i in range(4):
+#	for j in range(3):
 		#add_to_plot(1,i+1,j)
 		#add_to_plot(2,i+1,j)
 		#add_to_plot(3,i+1,j)
+add_to_plot(1,2,0)
+add_to_plot(2,2,0)
+add_to_plot(3,2,0)
+add_to_plot(4,2,0)
+add_to_plot(5,2,0)
 plt.grid()
 plt.legend()
 plt.xlabel(r'$t$')

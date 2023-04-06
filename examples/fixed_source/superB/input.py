@@ -45,7 +45,7 @@ for i in range(3):
 		mcdc.setting(N_particle=1E3,
 								 time_boundary=20.1,
 								 active_bank_buff=2E7,
-								 census_bank_buff=1E5,
+								 census_bank_buff=1E3,
 								 output="9_"+str(2**j)+"_"+str(Nt[i])
 	)
 
