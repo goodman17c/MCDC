@@ -2305,8 +2305,6 @@ def get_weight_window(P, mcdc):
     
 @njit
 def weight_window(P, mcdc):
-<<<<<<< HEAD
-=======
 #    c = 1.1
 #    i = complex(0,1)
 #    x = P['x']
@@ -2320,7 +2318,6 @@ def weight_window(P, mcdc):
 #        integral = quad(integrand,0.0,np.pi,args=(eta,t))[0]
 #        w_target = np.e**-t/2/t*(1+c*t/4/np.pi*(1-eta**2)*integral)
 #    if (True):
->>>>>>> 76ddeee58c8f89c91dbb76457a8919e9ef0b74a1
     # Get indices
     t, x, y, z, outside = mesh_get_index(P, mcdc['technique']['ww_mesh'])
 
