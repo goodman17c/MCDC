@@ -286,6 +286,7 @@ def generate_hdf5():
         print_msg(" Generating output HDF5 files...")
 
         with h5py.File(mcdc['setting']['output']+'.h5', 'w') as f:
+            f.create_dataset("N_particle",data=np.array([mcdc['setting']['N_particle']]))
             # Runtime
             for name in ['total', 'bank_management']:
                 f.create_dataset("runtime_"+name,
