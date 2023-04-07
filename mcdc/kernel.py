@@ -233,17 +233,39 @@ def update_weight_window(mcdc):
         mcdc['technique']['ww'][t+1,:,:,:] = ww/np.max(ww)
     if mcdc['technique']['auto_ww'] == COOPER_WEIGHT_WINDOW:
         #gather scalar flux
+        t2 = mcdc['technique']['ww_mesh']['t']
+        dt = t2[mcdc['technique']['census_idx']+1]-t2[mcdc['technique']['census_idx']]
+        x = mcdc['technique']['ww_mesh']['x']
+        dx = x[1:]-x[:-1]
         phi = mcdc['tally']['score']['flux']['mean'][0,t,:,0,0,0,0]
         J = mcdc['tally']['score']['current_x']['mean'][0,t,:,0,0,0]
         Edd = mcdc['tally']['score']['eddington']['mean'][0,t,:,0,0,0]
         Edd[Edd>0]=Edd[Edd>0]/phi[Edd>0]
         Edd[Edd<=0] = 0.33
         #0 BC
+        phi=phi/dx/dt
+        J=J/dt
         phi=np.insert(phi,0,0)
         phi=np.append(phi,0)
         phi, J = det.QD1D(mcdc, phi, J, Edd)
         phi /= np.nanmax(phi)
-        #print(phi)
+        mcdc['technique']['ww'][t+1,:,0,0] = phi
+    if mcdc['technique']['auto_ww'] == COOPER_2_WEIGHT_WINDOW:
+        x = mcdc['technique']['ww_mesh']['x']
+        dx = x[1:]-x[:-1]
+        #gather scalar flux
+        phi = mcdc['tally']['score']['flux_t']['mean'][0,t+1,:,0,0,0,0]
+        J = mcdc['tally']['score']['current_x']['mean'][0,t,:,0,0,0]
+        Edd = mcdc['tally']['score']['eddington_t']['mean'][0,t+1,:,0,0,0]
+        Edd[Edd>0]=Edd[Edd>0]/phi[Edd>0]
+        Edd[Edd<=0] = 0.33
+        #0 BC
+        phi=phi/dx
+        J=J/dt
+        phi=np.insert(phi,0,0)
+        phi=np.append(phi,0)
+        phi, J = det.QD1D(mcdc, phi, J, Edd)
+        phi /= np.nanmax(phi)
         mcdc['technique']['ww'][t+1,:,0,0] = phi
 
 
@@ -1471,6 +1493,9 @@ def score_closeout(score, mcdc):
 def score_closeout_timestep(score, mcdc):
     N_history = mcdc['setting']['N_particle']
     t = mcdc['technique']['census_idx']
+    #do next time step for time crossing tallies
+    if(score['mean'].shape[1] > len(mcdc['technique']['census_time'])):
+        t = mcdc['technique']['census_idx']+1
 
     # MPI AllReduce
     buff    = np.zeros_like(score['mean'][:,t])
@@ -1510,14 +1535,6 @@ def tally_closeout_timestep(mcdc):
 
     for name in literal_unroll(score_list):
         if tally[name]:
-            score_closeout_timestep(tally['score'][name], mcdc)
-
-@njit
-def tally_closeout_endtimestep(mcdc):
-    tally = mcdc['tally']
-
-    for name in literal_unroll(score_list):
-        if (tally[name] and np.ma.size(tally['score'][name]['mean'],1) > mcdc['technique']['census_idx']):
             score_closeout_timestep(tally['score'][name], mcdc)
 
 #==============================================================================

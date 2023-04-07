@@ -6,7 +6,7 @@ import h5py
 ref=["reference.npz", "reference_40.npz", "reference_80.npz"]
 
 def add_to_plot(i, j, k):
-		method = ["1","2","3","4","5","6","7"]
+		method = ["1","2","3","4","5","6","7","9"]
 		width = ["_1", "_2", "_4", "_8"]
 		Nt = ["_20","_40","_80"]
 		# =============================================================================
@@ -52,6 +52,7 @@ def add_to_plot(i, j, k):
 				rel_err_L2=np.zeros(K)
 				rel_err_2=np.zeros(K)
 				stat_err=np.zeros(K)
+				missing_domain=np.zeros(K)
 				
 				FOM_L2=np.zeros(K)
 
@@ -67,13 +68,15 @@ def add_to_plot(i, j, k):
 						rel_err_L2[k] = err_L2[k]/np.sqrt(np.sum(np.power(phi_ref[k],2)*dx))
 						rel_err_2[k] = err_2[k]/np.sqrt(np.sum(np.power(phi_ref[k],2)))
 						stat_err[k] = np.sqrt(np.sum(np.power(phi_sd[k],2))/np.sum(np.power(phi[k],2)))
+						missing_domain[k] = 1-np.count_nonzero(phi[k]>0)/np.count_nonzero(phi_ref[k]>0)
 						
 						FOM_L2[k] = np.sqrt(np.sum(np.power(FOM[k],2)*dx))
 
 				#plt.semilogy(t_mid,FOM_L2,label=file)
+				#plt.semilogy(t_mid,missing_domain,label=file)
 				plt.semilogy(t_mid,rel_err_L2,label=file)
 				#plt.semilogy(t_mid,stat_err,label=file)
-				#plt.semilogy(t,n_t_int,label=file)
+				#plt.semilogy(t[1:],n_t_int[1:],label=file)
 
 # =============================================================================
 # Animate results
@@ -84,11 +87,13 @@ def add_to_plot(i, j, k):
 		#add_to_plot(1,i+1,j)
 		#add_to_plot(2,i+1,j)
 		#add_to_plot(3,i+1,j)
-add_to_plot(1,2,0)
-add_to_plot(2,2,0)
-add_to_plot(3,2,0)
-add_to_plot(4,2,0)
-add_to_plot(5,2,0)
+add_to_plot(1,0,0)
+add_to_plot(2,0,0)
+add_to_plot(3,0,0)
+add_to_plot(4,0,0)
+add_to_plot(5,0,0)
+add_to_plot(6,0,0)
+add_to_plot(7,0,0)
 plt.grid()
 plt.legend()
 plt.xlabel(r'$t$')

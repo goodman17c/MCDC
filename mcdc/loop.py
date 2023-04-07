@@ -62,8 +62,6 @@ def loop_main(mcdc):
         kernel.tally_closeout(mcdc)
     else:
         kernel.tally_closeout_timestep(mcdc)
-        mcdc['technique']['census_idx'] += 1
-        kernel.tally_closeout_endtimestep(mcdc)
 
 
 # =============================================================================
