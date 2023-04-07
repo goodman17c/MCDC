@@ -5,9 +5,9 @@ import h5py
 
 ref=["reference.npz", "reference_40.npz", "reference_80.npz"]
 
-def add_to_plot(i, j, k):
-		method = ["1","2","3","4","5","6","7","9"]
-		width = ["_1", "_2", "_4", "_8"]
+def add_to_plot(i, j, k,l):
+		method = ["0","1","2","3","4","5","6","7","8","9"]
+		width = ["","_1", "_2", "_4", "_8"]
 		Nt = ["_20","_40","_80"]
 		# =============================================================================
 		# Reference solution (SS)
@@ -26,7 +26,7 @@ def add_to_plot(i, j, k):
 		t_mid = 0.5*(t[:-1]+t[1:])
 		K     = len(dt)
 		J     = len(x_mid)
-		file = method[i] + width[j] + Nt[k]+".h5"
+		file = method[i] + width[j] + Nt[k]+ "_" + str(l) + ".h5"
 		with h5py.File(file, 'r') as f:
 				phi      = f['tally/flux/mean'][:]
 				phi_sd   = f['tally/flux/sdev'][:]
@@ -87,13 +87,13 @@ def add_to_plot(i, j, k):
 		#add_to_plot(1,i+1,j)
 		#add_to_plot(2,i+1,j)
 		#add_to_plot(3,i+1,j)
-add_to_plot(1,0,0)
-add_to_plot(2,0,0)
-add_to_plot(3,0,0)
-add_to_plot(4,0,0)
-add_to_plot(5,0,0)
-add_to_plot(6,0,0)
-add_to_plot(7,0,0)
+add_to_plot(1,0,0,400)
+add_to_plot(2,1,0,400)
+add_to_plot(4,1,0,400)
+add_to_plot(5,1,0,400)
+add_to_plot(6,1,0,400)
+add_to_plot(7,1,0,400)
+add_to_plot(9,1,0,400)
 plt.grid()
 plt.legend()
 plt.xlabel(r'$t$')

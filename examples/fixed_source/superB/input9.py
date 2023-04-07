@@ -1,6 +1,6 @@
 Nt= [20, 40, 80]
 ref=["reference.npz", "reference_40.npz", "reference_80.npz"]
-Nplist = [400, 1E3, 4E3, 1E4, 2E4]
+Nplist = [400, 1000, 4000, 10000, 40000]
 for Np in Nplist:
     for i in range(3):
         for j in range(4):
@@ -47,7 +47,7 @@ for Np in Nplist:
             mcdc.setting(N_particle=Np,
                                      time_boundary=20.1,
                                      active_bank_buff=2E7,
-                                     census_bank_buff=1E5,
+                                     census_bank_buff=1E4,
                                      output="9_"+str(2**j)+"_"+str(Nt[i])+"_"+str(Np)
         )
 

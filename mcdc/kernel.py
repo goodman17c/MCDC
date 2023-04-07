@@ -253,6 +253,8 @@ def update_weight_window(mcdc):
     if mcdc['technique']['auto_ww'] == COOPER_2_WEIGHT_WINDOW:
         x = mcdc['technique']['ww_mesh']['x']
         dx = x[1:]-x[:-1]
+        t2 = mcdc['technique']['ww_mesh']['t']
+        dt = t2[mcdc['technique']['census_idx']+1]-t2[mcdc['technique']['census_idx']]
         #gather scalar flux
         phi = mcdc['tally']['score']['flux_t']['mean'][0,t+1,:,0,0,0,0]
         J = mcdc['tally']['score']['current_x']['mean'][0,t,:,0,0,0]
