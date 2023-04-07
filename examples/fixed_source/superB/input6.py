@@ -1,7 +1,7 @@
 Nt= [20, 40, 80]
 ref=["reference.npz", "reference_40.npz", "reference_80.npz"]
 Nplist = [400, 1E3, 4E3, 1E4, 2E4]
-    for Np in Nplist:
+for Np in Nplist:
     for i in range(3):
         for j in range(4):
 
