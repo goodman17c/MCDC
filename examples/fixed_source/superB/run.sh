@@ -5,7 +5,6 @@
 
 srun -n 360 python input1.py
 srun -n 360 python input2.py
-srun -n 360 python input3.py
 srun -n 360 python input4.py
 srun -n 360 python input5.py
 srun -n 360 python input6.py
