@@ -24,7 +24,10 @@ def QD1D(mcdc, phi_in, J_in, Edd_in):
     Edd2[0] = Edd_in[0]
     Edd2[1:-1] = Edd_in[:]
     Edd2[-1] = Edd_in[-1]
-    
+
+
+    phi_in=phi_in/dx[0]/dt 
+   
     #0 BC
     phiLin=0
     phiRin=0

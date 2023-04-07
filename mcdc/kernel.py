@@ -236,7 +236,8 @@ def update_weight_window(mcdc):
         phi = mcdc['tally']['score']['flux']['mean'][0,t,:,0,0,0,0]
         J = mcdc['tally']['score']['current_x']['mean'][0,t,:,0,0,0]
         Edd = mcdc['tally']['score']['eddington']['mean'][0,t,:,0,0,0]
-        Edd[Edd==0] = 0.33
+        Edd[Edd>0]=Edd[Edd>0]/phi[Edd>0]
+        Edd[Edd<=0] = 0.33
         #0 BC
         phi=np.insert(phi,0,0)
         phi=np.append(phi,0)
