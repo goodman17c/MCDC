@@ -1,7 +1,7 @@
 #!/bin/tcsh
 #SBATCH -N 10
 #SBATCH -p pbatch
-#SBATCH -t 8:00:00
+#SBATCH -t 24:00:00
 
 srun -n 360 python input1.py
 srun -n 360 python input2.py

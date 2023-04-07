@@ -47,7 +47,7 @@ for Np in Nplist:
             mcdc.setting(N_particle=Np,
                                      time_boundary=20.1,
                                      active_bank_buff=2E7,
-                                     census_bank_buff=1E3,
+                                     census_bank_buff=1E5,
                                      output="7_"+str(2**j)+"_"+str(Nt[i])+"_"+str(Np)
         )
 
