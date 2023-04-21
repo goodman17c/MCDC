@@ -460,6 +460,12 @@ setting = np.dtype(
         ("filed_source", bool_),
         ("source_file", "U20"),
         ("track_particle", bool_),
+        ("dd_mesh", np.dtype([
+                ("x", float64, (2,)),
+                ("y", float64, (2,)),
+                ("z", float64, (2,)),
+                ("t", float64, (2,)),
+            ])),
     ]
 )
 

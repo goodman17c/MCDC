@@ -204,31 +204,38 @@ def loop_particle(P, mcdc):
                     kernel.sensitivity_material(P, mcdc)
 
         # Mesh crossing
-        elif event & EVENT_MESH:
+        if event & EVENT_MESH:
             kernel.mesh_crossing(P, mcdc)
+            event -= EVENT_MESH
 
         # Surface crossing
         if event & EVENT_SURFACE:
             kernel.surface_crossing(P, mcdc)
 
         # Lattice crossing
-        elif event & EVENT_LATTICE:
+        if event & EVENT_LATTICE:
             kernel.shift_particle(P, SHIFT)
 
         # Time boundary
-        elif event & EVENT_TIME_BOUNDARY:
+        if event & EVENT_TIME_BOUNDARY:
             kernel.mesh_crossing(P, mcdc)
             kernel.time_boundary(P, mcdc)
 
         # Surface move
-        elif event == EVENT_SURFACE + EVENT_MOVE:
+        if event == EVENT_SURFACE + EVENT_MOVE:
             P["t"] += SHIFT
             P["cell_ID"] = -1
 
         # Time census
-        elif event & EVENT_CENSUS:
+        if event & EVENT_CENSUS:
             P["t"] += SHIFT
             kernel.add_particle(kernel.copy_particle(P), mcdc["bank_census"])
+            P["alive"] = False
+        
+        # Domain Crossing
+        if event & EVENT_DOMAIN:
+            kernel.shift_particle(P, SHIFT)
+            #kernel.add_particle(kernel.copy_particle(P), mcdc["bank_domain"][0])
             P["alive"] = False
 
         # Apply weight window

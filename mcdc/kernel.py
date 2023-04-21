@@ -1659,6 +1659,9 @@ def move_to_event(P, mcdc):
     # Distance to nearest geometry boundary (surface or lattice)
     # Also set particle material and speed
     d_boundary, event = distance_to_boundary(P, mcdc)
+    
+    # Distance to domain mesh
+    dom_mesh = distance_to_mesh(P, mcdc["setting"]["dd_mesh"], mcdc)
 
     # Distance to tally mesh
     d_mesh = INF
@@ -1691,23 +1694,19 @@ def move_to_event(P, mcdc):
     # =========================================================================
 
     # Find the minimum
-    distance = d_boundary
+    distance = min(d_boundary,d_time_boundary,dom_mesh, d_time_census, d_mesh, d_collision)
+    if d_boundary > distance * PREC: # Not Boundary
+        event=0
     if d_time_boundary * PREC < distance:
-        event = EVENT_TIME_BOUNDARY
-        distance = d_time_boundary
+        event += EVENT_TIME_BOUNDARY
+    if dom_mesh * PREC < distance:
+        event += EVENT_DOMAIN
     if d_time_census * PREC < distance:
-        event = EVENT_CENSUS
-        distance = d_time_census
+        event += EVENT_CENSUS
     if d_mesh * PREC < distance:
-        event = EVENT_MESH
-        distance = d_mesh
+        event += EVENT_MESH
     if d_collision * PREC < distance:
         event = EVENT_COLLISION
-        distance = d_collision
-
-    # Crossing both boundary and mesh
-    if d_boundary == d_mesh or d_time_census == d_mesh:
-        event += EVENT_MESH
 
     # Assign event
     P["event"] = event

@@ -96,6 +96,13 @@ class InputCard:
             "filed_source": False,
             "source_file": "",
             "track_particle": False,
+            "d_idx": 0,
+            "dd_mesh": {
+                "x": np.array([-INF, INF]),
+                "y": np.array([-INF, INF]),
+                "z": np.array([-INF, INF]),
+                "t": np.array([-INF, INF]),
+            },
         }
 
         self.technique = {

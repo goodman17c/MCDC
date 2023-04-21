@@ -12,8 +12,9 @@ EVENT_CAPTURE = 1 << 6
 EVENT_TIME_BOUNDARY = 1 << 7
 EVENT_LATTICE = 1 << 8
 EVENT_MOVE = 1 << 9
+EVENT_DOMAIN = 1 << 10
 
-ALL_EVENTS = 1 << 10 - 1
+ALL_EVENTS = 1 << 11 - 1
 
 # Mesh crossing flags
 MESH_X = 0

@@ -25,6 +25,7 @@ def run():
     # Preparation:
     #   process input cards, make types, and allocate global variables
     preparation_start = MPI.Wtime()
+    domain_reduction()
     prepare()
     input_card.reset()
     mcdc["runtime_preparation"] = MPI.Wtime() - preparation_start
@@ -57,6 +58,109 @@ def run():
 
     # Closout
     closeout()
+
+
+def domain_reduction():
+    d_idx = MPI.COMM_WORLD.Get_rank()
+    d_Nx = input_card.setting["dd_mesh"]["x"].size - 1
+    d_Ny = input_card.setting["dd_mesh"]["y"].size - 1
+    d_Nz = input_card.setting["dd_mesh"]["z"].size - 1
+
+    # Allocate MPI ranks to domains
+    d_ix = d_idx % d_Nx
+    d_iy = int(((d_idx - d_ix) / d_Nx) % d_Ny)
+    d_iz = int((((d_idx - d_ix) / d_Nx - d_iy) / d_Ny) % d_Nz)
+
+    d_idx = MPI.COMM_WORLD.Get_rank() % (d_Nx * d_Ny * d_Nz)
+    input_card.setting["d_idx"] = d_idx
+
+    # Bounds of domain
+    x_min = input_card.setting["dd_mesh"]["x"][d_ix]
+    x_max = input_card.setting["dd_mesh"]["x"][d_ix + 1]
+    y_min = input_card.setting["dd_mesh"]["y"][d_iy]
+    y_max = input_card.setting["dd_mesh"]["y"][d_iy + 1]
+    z_min = input_card.setting["dd_mesh"]["z"][d_iz]
+    z_max = input_card.setting["dd_mesh"]["z"][d_iz + 1]
+
+    input_card.setting["dd_mesh"]["x"] = np.array([x_min, x_max])
+    input_card.setting["dd_mesh"]["y"] = np.array([y_min, y_max])
+    input_card.setting["dd_mesh"]["z"] = np.array([z_min, z_max])
+
+    #############################################
+    # Delete things outside of domain
+    #############################################
+
+    ##Cells
+    # if volume of cell in domain is 0, delete
+
+    ##Surfaces
+    # eliminate surfaces that do not appear in surface IDs of cells
+    # decrement all surfaces IDs for surface IDs greater than the deleted surface
+
+    ##Lattices
+    # eliminate lattices that do not appear in the lattice IDS of the cells
+
+    ##Universes
+    # eliminate universes that do not appear in the universe IDs of lattices
+
+    ##Materials
+    # eliminate materials that do not appear in either a cell or a lattice
+
+    ##Nuclides
+    # eliminate nuclides that do not appear in a material
+
+    ##Sources
+    # modify source shape and strength?
+    # if source is not in domain, discard
+    # consideration needed for how to correct solution, since no longer uniformly sampling source
+    # Or sample from all input sources and distribute those particles to relevant nodes later
+    idx_to_remove = np.zeros((0,))
+    for i in range(len(input_card.sources)):
+        source = input_card.sources[i]
+        if source["box"]:
+            if np.all(source["box_x"] < x_min) or np.all(source["box_x"] > x_max):
+                idx_to_remove = np.append(idx_to_remove, i)
+                continue
+            elif np.all(source["box_y"] < y_min) or np.all(source["box_y"] > y_max):
+                idx_to_remove = np.append(idx_to_remove, i)
+                continue
+            elif np.all(source["box_z"] < z_min) or np.all(source["box_z"] > z_max):
+                idx_to_remove = np.append(idx_to_remove, i)
+                continue
+            input_card.sources[i]["box_x"][0] = max(source["box_x"][0], x_min)
+            input_card.sources[i]["box_x"][1] = min(source["box_x"][1], x_max)
+            input_card.sources[i]["box_y"][0] = max(source["box_y"][0], y_min)
+            input_card.sources[i]["box_y"][1] = min(source["box_y"][1], y_max)
+            input_card.sources[i]["box_z"][0] = max(source["box_z"][0], z_min)
+            input_card.sources[i]["box_z"][1] = min(source["box_z"][1], z_max)
+        else:
+            if source["x"] < x_min or source["x"] > x_max:
+                idx_to_remove = np.append(idx_to_remove, i)
+            elif source["y"] < y_min or source["y"] > y_max:
+                idx_to_remove = np.append(idx_to_remove, i)
+            elif source["z"] < z_min or source["z"] > z_max:
+                idx_to_remove = np.append(idx_to_remove, i)
+    if len(idx_to_remove) > 0:
+        input_card.sources = np.delete(input_card.sources, idx_to_remove)
+
+    ##Tallies
+    x = input_card.tally["mesh"]["x"]
+    ix1 = np.nonzero(x >= x_min)[0][0]
+    ix2 = np.nonzero(x <= x_max)[0][-1]
+    input_card.tally["mesh"]["x"] = x[ix1:ix2+1]
+    
+    y = input_card.tally["mesh"]["y"]
+    iy1 = np.nonzero(y >= y_min)[0][0]
+    iy2 = np.nonzero(y <= y_max)[0][-1]
+    input_card.tally["mesh"]["y"] = y[iy1:iy2+1]
+
+    z = input_card.tally["mesh"]["z"]
+    iz1 = np.nonzero(z >= z_min)[0][0]
+    iz2 = np.nonzero(z <= z_max)[0][-1]
+    input_card.tally["mesh"]["z"] = z[iz1:iz2+1]
+
+    ##Techniques
+    # Modify meshs with new bounds
 
 
 def prepare():
@@ -233,7 +337,13 @@ def prepare():
     # =========================================================================
 
     for name in type_.setting.names:
-        mcdc["setting"][name] = input_card.setting[name]
+        if name not in ["dd_mesh"]:
+            mcdc["setting"][name] = input_card.setting[name]
+    
+    mcdc["setting"]["dd_mesh"]["x"] = input_card.setting["dd_mesh"]["x"]
+    mcdc["setting"]["dd_mesh"]["y"] = input_card.setting["dd_mesh"]["y"]
+    mcdc["setting"]["dd_mesh"]["z"] = input_card.setting["dd_mesh"]["z"]
+    mcdc["setting"]["dd_mesh"]["t"] = input_card.setting["dd_mesh"]["t"]
 
     # Check if time boundary matches the final tally mesh time grid
     if mcdc["setting"]["time_boundary"] > mcdc["tally"]["mesh"]["t"][-1]:
