@@ -785,6 +785,8 @@ def auto_ww(method="manual"):
         card["auto_ww"] = COOPER_WEIGHT_WINDOW
     elif method == "cooper2":
         card["auto_ww"] = COOPER_2_WEIGHT_WINDOW
+    elif method == "cooper-t":
+        card["auto_ww"] = COOPER_3_WEIGHT_WINDOW
 
 
 def weight_window(

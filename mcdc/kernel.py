@@ -290,6 +290,32 @@ def update_weight_window(mcdc):
         phi, J = det.QD1D(mcdc, phi, J, Edd)
         phi /= np.nanmax(phi)
         mcdc["technique"]["ww"][t + 1, :, 0, 0] = phi
+    if mcdc["technique"]["auto_ww"] == COOPER_3_WEIGHT_WINDOW: #Backward Euler defined at time-boundary
+        x = mcdc["technique"]["ww_mesh"]["x"]
+        dx = x[1:] - x[:-1]
+        t2 = mcdc["technique"]["ww_mesh"]["t"]
+        dt = (
+            t2[mcdc["technique"]["census_idx"] + 1]
+            - t2[mcdc["technique"]["census_idx"]]
+        )
+        # gather scalar flux
+        phi = mcdc["tally"]["score"]["flux_t"]["mean"][0, t + 1, :, 0, 0, 0, 0]
+        Jt = mcdc["tally"]["score"]["current_t"]["mean"][0, t + 1, :, 0, 0, 0]
+        Edd = mcdc["tally"]["score"]["eddington_t"]["mean"][0, t + 1, :, 0, 0, 0]
+        Edd[Edd > 0] = Edd[Edd > 0] / phi[Edd > 0]
+        Edd[Edd <= 0] = 0.33
+        # 0 BC
+        # Apply linear closure to find edge currents
+        J = np.zeros((len(Jt)+1, ))
+        for i in range(len(Jt)-1):
+            J[i+1] = Jt[i] + Jt[i + 1]
+        phi = phi / dx
+        #J = J / dx
+        phi = np.insert(phi, 0, 0)
+        phi = np.append(phi, 0)
+        phi, J = det.QD1D(mcdc, phi, J, Edd)
+        phi /= np.nanmax(phi)
+        mcdc["technique"]["ww"][t + 1, :, 0, 0] = phi
 
 
 @njit
