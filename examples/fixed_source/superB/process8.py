@@ -188,7 +188,7 @@ for methodi in method:
 
                 def animate(k):
                     line1.set_data(x_mid, phi[k, :])
-                    #ax.collections.clear()
+                    ax.collections.clear()
                     ax.fill_between(
                         x_mid,
                         phi[k, :] - phi_sd[k, :],
