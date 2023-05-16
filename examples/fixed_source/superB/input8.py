@@ -67,7 +67,7 @@ for Np in Nplist:
                 window=phi_ref,
             )
             mcdc.implicit_capture()
-            mcdc.auto_ww(method="cooper3")
+            mcdc.auto_ww(method="cooper-t")
             mcdc.census(t=t[1:], pct="combing")
 
             # Run
