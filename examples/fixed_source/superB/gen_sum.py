@@ -6,14 +6,15 @@ Nt = [20, 40, 80]
 ref = ["reference.npz", "reference_40.npz", "reference_80.npz"]
 
 
-method = ["2", "3", "4", "5", "6", "7", "9"]
+method = ["2", "3", "4", "5", "6", "7", "8", "9"]
 methodname = [
     "Integral",
     "Continous",
     "End of TS",
     "Average of TS",
     "Beginning of TS",
-    "QD Beginning of TS",
+    "QD Start of TS SF Previous TS J",
+    "QD Beginning of TS Central Diff J",
     "QD Previous TS",
 ]
 Np = [400, 1000, 4000, 10000, 40000]
