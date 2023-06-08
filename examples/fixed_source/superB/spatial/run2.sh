@@ -4,5 +4,4 @@
 #SBATCH -p pbatch
 #SBATCH -t 2:00:00
 
-srun -n 360 python input0.py
-srun -n 360 python input10.py
+srun -n 360 python input3.py

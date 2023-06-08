@@ -52,7 +52,7 @@ for Np in Nplist:
                 time_boundary=20.1,
                 active_bank_buff=2e7,
                 census_bank_buff=1e4,
-                output="6_" + str(2**j) + "_" + str(Nt[i]) + "_" + str(Np),
+                output="10_" + str(2**j) + "_" + str(Nt[i]) + "_" + str(Np),
             )
 
             data = np.load(ref[i+1])
