@@ -34,6 +34,11 @@ PCT_NONE = 0
 PCT_COMBING = 1
 PCT_COMBING_WEIGHT = 10
 
+# Automatic weight window techniques
+MCCLAREN_WW = 1
+SEMIIMPLICIT_LOQD_WW = 4
+SEMIIMPLICIT_LOQD_HALF_WW = 5
+
 # Misc.
 INF = 1e10
 PI = math.acos(-1.0)

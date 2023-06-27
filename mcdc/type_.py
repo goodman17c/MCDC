@@ -315,6 +315,7 @@ def make_type_source(G):
 
 # Score lists
 score_tl_list = (
+    "n",
     "flux",
     "current",
     "eddington",
@@ -323,6 +324,7 @@ score_tl_list = (
     "total",
 )
 score_x_list = (
+    "n_x",
     "flux_x",
     "current_x",
     "eddington_x",
@@ -331,6 +333,7 @@ score_x_list = (
     "total_x",
 )
 score_y_list = (
+    "n_y",
     "flux_y",
     "current_y",
     "eddington_y",
@@ -339,6 +342,7 @@ score_y_list = (
     "total_y",
 )
 score_z_list = (
+    "n_z",
     "flux_z",
     "current_z",
     "eddington_z",
@@ -347,6 +351,7 @@ score_z_list = (
     "total_z",
 )
 score_t_list = (
+    "n_t",
     "flux_t",
     "current_t",
     "eddington_t",
@@ -386,22 +391,27 @@ def make_type_tally(Ns, card):
 
     # Scores and shapes
     scores_shapes = [
+        ["n", (Ns, Ng, Nt, Nx, Ny, Nz, Nmu, N_azi)],
         ["flux", (Ns, Ng, Nt, Nx, Ny, Nz, Nmu, N_azi)],
         ["density", (Ns, Ng, Nt, Nx, Ny, Nz, Nmu, N_azi)],
         ["fission", (Ns, Ng, Nt, Nx, Ny, Nz, Nmu, N_azi)],
         ["total", (Ns, Ng, Nt, Nx, Ny, Nz, Nmu, N_azi)],
+        ["n_x", (Ns, Ng, Nt, Nx + 1, Ny, Nz, Nmu, N_azi)],
         ["flux_x", (Ns, Ng, Nt, Nx + 1, Ny, Nz, Nmu, N_azi)],
         ["density_x", (Ns, Ng, Nt, Nx + 1, Ny, Nz, Nmu, N_azi)],
         ["fission_x", (Ns, Ng, Nt, Nx + 1, Ny, Nz, Nmu, N_azi)],
         ["total_x", (Ns, Ng, Nt, Nx + 1, Ny, Nz, Nmu, N_azi)],
+        ["n_y", (Ns, Ng, Nt, Nx, Ny + 1, Nz, Nmu, N_azi)],
         ["flux_y", (Ns, Ng, Nt, Nx, Ny + 1, Nz, Nmu, N_azi)],
         ["density_y", (Ns, Ng, Nt, Nx, Ny + 1, Nz, Nmu, N_azi)],
         ["fission_y", (Ns, Ng, Nt, Nx, Ny + 1, Nz, Nmu, N_azi)],
         ["total_y", (Ns, Ng, Nt, Nx, Ny + 1, Nz, Nmu, N_azi)],
+        ["n_z", (Ns, Ng, Nt, Nx, Ny, Nz + 1, Nmu, N_azi)],
         ["flux_z", (Ns, Ng, Nt, Nx, Ny, Nz + 1, Nmu, N_azi)],
         ["density_z", (Ns, Ng, Nt, Nx, Ny, Nz + 1, Nmu, N_azi)],
         ["fission_z", (Ns, Ng, Nt, Nx, Ny, Nz + 1, Nmu, N_azi)],
         ["total_z", (Ns, Ng, Nt, Nx, Ny, Nz + 1, Nmu, N_azi)],
+        ["n_t", (Ns, Ng, Nt + 1, Nx, Ny, Nz, Nmu, N_azi)],
         ["flux_t", (Ns, Ng, Nt + 1, Nx, Ny, Nz, Nmu, N_azi)],
         ["density_t", (Ns, Ng, Nt + 1, Nx, Ny, Nz, Nmu, N_azi)],
         ["fission_t", (Ns, Ng, Nt + 1, Nx, Ny, Nz, Nmu, N_azi)],
@@ -508,10 +518,23 @@ def make_type_technique(N_particle, G, card):
     # Mesh
     mesh, Nx, Ny, Nz, Nt, Nmu, N_azi, Ng = make_type_mesh(card["ww_mesh"])
     struct += [("ww_mesh", mesh)]
+
+    # Width
     struct += [("ww_width", float64)]
 
     # Window
     struct += [("ww", float64, (Nt, Nx, Ny, Nz))]
+
+    # Behaviors
+    struct += [("ww_zeros", bool_)]
+
+    # =========================================================================
+    # Automated Weight window
+    # =========================================================================
+
+    # Method
+    struct += [("auto_ww", int64)]
+    struct += [("auto_ww_corrector", bool_), ("auto_ww_predictor", bool_)]
 
     # =========================================================================
     # Weight Roulette
@@ -577,6 +600,7 @@ def make_type_technique(N_particle, G, card):
     struct += [
         ("census_time", float64, (len(card["census_time"]),)),
         ("census_idx", int64),
+        ("census_closeout", bool_),
     ]
 
     # =========================================================================

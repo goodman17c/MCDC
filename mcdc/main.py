@@ -261,10 +261,16 @@ def prepare():
         "implicit_capture",
         "population_control",
         "weight_window",
+        "ww_width",
+        "ww_zeros",
+        "auto_ww",
+        "auto_ww_predictor",
+        "auto_ww_corrector",
         "weight_roulette",
         "iQMC",
         "IC_generator",
         "time_census",
+        "census_closeout",
         "branchless_collision",
     ]:
         mcdc["technique"][name] = input_card.technique[name]
@@ -287,7 +293,6 @@ def prepare():
 
     # WW windows
     mcdc["technique"]["ww"] = input_card.technique["ww"]
-    mcdc["technique"]["ww_width"] = input_card.technique["ww_width"]
 
     # =========================================================================
     # Weight roulette

@@ -4,6 +4,7 @@ from mpi4py import MPI
 from numba import njit, objmode, literal_unroll
 
 import mcdc.type_ as type_
+import mcdc.deterministic as det
 
 from mcdc.constant import *
 from mcdc.print_ import print_error
@@ -1231,6 +1232,8 @@ def score_tracklength(P, distance, mcdc):
 
     # Score
     flux = distance * P["w"]
+    if tally["n"]:
+        score_flux(s, g, t, x, y, z, mu, azi, 1, tally["score"]["n"])
     if tally["flux"]:
         score_flux(s, g, t, x, y, z, mu, azi, flux, tally["score"]["flux"])
     if tally["density"]:
@@ -1262,6 +1265,8 @@ def score_crossing_x(P, t, x, y, z, mcdc):
 
     # Score
     flux = P["w"] / abs(P["ux"])
+    if tally["n_x"]:
+        score_flux(s, g, t, x, y, z, mu, azi, 1, tally["score"]["n_x"])
     if tally["flux_x"]:
         score_flux(s, g, t, x, y, z, mu, azi, flux, tally["score"]["flux_x"])
     if tally["density_x"]:
@@ -1293,6 +1298,8 @@ def score_crossing_y(P, t, x, y, z, mcdc):
 
     # Score
     flux = P["w"] / abs(P["uy"])
+    if tally["n_y"]:
+        score_flux(s, g, t, x, y, z, mu, azi, 1, tally["score"]["n_y"])
     if tally["flux_y"]:
         score_flux(s, g, t, x, y, z, mu, azi, flux, tally["score"]["flux_y"])
     if tally["density_y"]:
@@ -1324,6 +1331,8 @@ def score_crossing_z(P, t, x, y, z, mcdc):
 
     # Score
     flux = P["w"] / abs(P["uz"])
+    if tally["n_z"]:
+        score_flux(s, g, t, x, y, z, mu, azi, 1, tally["score"]["n_z"])
     if tally["flux_z"]:
         score_flux(s, g, t, x, y, z, mu, azi, flux, tally["score"]["flux_z"])
     if tally["density_z"]:
@@ -1354,6 +1363,8 @@ def score_crossing_t(P, t, x, y, z, mcdc):
 
     # Score
     flux = P["w"] * material["speed"][g]
+    if tally["n_t"]:
+        score_flux(s, g, t, x, y, z, mu, azi, 1, tally["score"]["n_t"])
     if tally["flux_t"]:
         score_flux(s, g, t, x, y, z, mu, azi, flux, tally["score"]["flux_t"])
     if tally["density_t"]:
@@ -1440,6 +1451,31 @@ def score_closeout(score, mcdc):
 
 
 @njit
+def score_closeout_timestep(score, mcdc):
+    N_history = mcdc["setting"]["N_particle"]
+    t = mcdc["technique"]["census_idx"]
+    # do next time step for time crossing tallies
+    if score["mean"].shape[2] > len(mcdc["technique"]["census_time"]):
+        t = mcdc["technique"]["census_idx"] + 1
+
+    # MPI AllReduce
+    buff = np.zeros_like(score["mean"][:, :, t])
+    buff_sq = np.zeros_like(score["sdev"][:, :, t])
+    with objmode():
+        MPI.COMM_WORLD.Allreduce(np.array(score["mean"][:, :, t]), buff, MPI.SUM)
+        MPI.COMM_WORLD.Allreduce(np.array(score["sdev"][:, :, t]), buff_sq, MPI.SUM)
+    score["mean"][:, :, t] = buff
+    score["sdev"][:, :, t] = buff_sq
+
+    # Store results
+    score["mean"][:, :, t] = score["mean"][:, :, t] / N_history
+    score["sdev"][:, :, t] = np.sqrt(
+        (score["sdev"][:, :, t] / N_history - np.square(score["mean"][:, :, t]))
+        / (N_history - 1)
+    )
+
+
+@njit
 def tally_closeout_history(mcdc):
     tally = mcdc["tally"]
 
@@ -1455,6 +1491,15 @@ def tally_closeout(mcdc):
     for name in literal_unroll(score_list):
         if tally[name]:
             score_closeout(tally["score"][name], mcdc)
+
+
+@njit
+def tally_closeout_timestep(mcdc):
+    tally = mcdc["tally"]
+
+    for name in literal_unroll(score_list):
+        if tally[name]:
+            score_closeout_timestep(tally["score"][name], mcdc)
 
 
 # =============================================================================
@@ -2355,39 +2400,114 @@ def weight_window(P, mcdc):
     # Target weight
     w_target = mcdc["technique"]["ww"][t, x, y, z]
 
-    # Population control factor
-    w_target *= mcdc["technique"]["pc_factor"]
-
-    # Surviving probability
-    p = P["w"] / w_target
-
-    # Window width
-    width = mcdc["technique"]["ww_width"]
-
-    # If above target
-    if p > width:
-        # Set target weight
-        P["w"] = w_target
-
-        # Splitting (keep the original particle)
-        n_split = math.floor(p)
-        for i in range(n_split - 1):
-            add_particle(copy_particle(P), mcdc["bank_active"])
-
-        # Russian roulette
-        p -= n_split
-        xi = rng(mcdc)
-        if xi <= p:
-            add_particle(copy_particle(P), mcdc["bank_active"])
-
-    # Below target
-    elif p < 1.0 / width:
-        # Russian roulette
-        xi = rng(mcdc)
-        if xi > p:
+    # Zeros behavior defaults to skipping windows
+    if w_target == 0:
+        if mcdc["technique"]["ww_zeros"]:
             P["alive"] = False
-        else:
+    else:
+        # Population control factor
+        w_target *= mcdc["technique"]["pc_factor"]
+
+        # Surviving probability
+        p = P["w"] / w_target
+
+        # Window width
+        width = mcdc["technique"]["ww_width"]
+
+        # If above target
+        if p > width:
+            # Set target weight
             P["w"] = w_target
+
+            # Splitting (keep the original particle)
+            n_split = math.floor(p)
+            for i in range(n_split - 1):
+                add_particle(copy_particle(P), mcdc["bank_active"])
+
+            # Russian roulette
+            p -= n_split
+            xi = rng(mcdc)
+            if xi <= p:
+                add_particle(copy_particle(P), mcdc["bank_active"])
+
+        # Below target
+        elif p < 1.0 / width:
+            # Russian roulette
+            xi = rng(mcdc)
+            if xi > p:
+                P["alive"] = False
+            else:
+                P["w"] = w_target
+
+
+# ==============================================================================
+# Automatic Weight Window
+# ==============================================================================
+
+
+def auto_ww_predictor(mcdc):
+    t = mcdc["technique"]["census_idx"]
+    x = mcdc["technique"]["ww_mesh"]["x"]
+    dx = x[1:] - x[:-1]
+    Nx = len(dx)
+
+    # Weight window predictor method
+    if mcdc["technique"]["auto_ww"] == MCCLAREN_WW:
+        # Gather scalar flux from target source
+        ww = mcdc["tally"]["score"]["flux"]["mean"][0, 0, t, :, :, :, 0, 0]
+
+        # Normalize and set weight window
+        mcdc["technique"]["ww"][t + 1, :, :, :] = ww / np.max(ww)
+
+    elif mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_WW:
+        x = mcdc["technique"]["ww_mesh"]["x"]
+        dx = x[1:] - x[:-1]
+        t2 = mcdc["technique"]["ww_mesh"]["t"]
+        dt = (
+            t2[mcdc["technique"]["census_idx"] + 1]
+            - t2[mcdc["technique"]["census_idx"]]
+        )
+        # gather scalar flux, current, and second moment
+        phi = mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0]
+        Jt = mcdc["tally"]["score"]["current_t"]["mean"][0, 0, t + 1, :, 0, 0, 0]
+        Edd = mcdc["tally"]["score"]["eddington_t"]["mean"][0, 0, t + 1, :, 0, 0, 0]
+        Edd[Edd > 0] = Edd[Edd > 0] / phi[Edd > 0]
+        Edd[Edd <= 0] = 0.33
+        # 0 BC
+        # Apply linear closure to find edge currents
+        J = np.zeros((len(Jt) + 1,))
+        for i in range(len(Jt) - 1):
+            J[i + 1] = Jt[i] + Jt[i + 1]
+        phi = phi / dx
+        phi2 = np.zeros((Nx + 2,))
+        phi2[1:-1] = phi
+        phi, J = det.QD1D(mcdc, dt, phi2, J, Edd)
+        phi /= np.nanmax(phi)
+        mcdc["technique"]["ww"][t + 1, :, 0, 0] = phi
+
+    elif mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_HALF_WW:
+        t2 = mcdc["technique"]["ww_mesh"]["t"]
+        dt = (
+            t2[mcdc["technique"]["census_idx"] + 1]
+            - t2[mcdc["technique"]["census_idx"]]
+        )
+        # gather scalar flux, current, and second moment
+        phi = mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0]
+        Jt = mcdc["tally"]["score"]["current_t"]["mean"][0, 0, t + 1, :, 0, 0, 0]
+        Edd = mcdc["tally"]["score"]["eddington_t"]["mean"][0, 0, t + 1, :, 0, 0, 0]
+        Edd[Edd > 0] = Edd[Edd > 0] / phi[Edd > 0]
+        Edd[Edd <= 0] = 0.33
+        # 0 BC
+        # Apply linear closure to find edge currents
+        J = np.zeros((len(Jt) + 1,))
+        for i in range(len(Jt) - 1):
+            J[i + 1] = Jt[i] + Jt[i + 1]
+        phi = phi / dx
+        phi2 = np.zeros((Nx + 2,))
+        phi2[1:-1] = phi
+        phi, J = det.QD1D(mcdc, dt / 2, phi2, J, Edd)
+        phi /= np.nanmax(phi)
+        mcdc["technique"]["ww"][t + 1, :, 0, 0] = phi
 
 
 # ==============================================================================

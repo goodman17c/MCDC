@@ -1134,15 +1134,17 @@ def branchless_collision():
     card["weighted_emission"] = False
 
 
-def census(t, pct="none"):
+def census(t, pct="none", closeout=None):
     card = mcdc.input_card.technique
     card["time_census"] = True
     card["census_time"] = t
     if pct != "none":
         population_control(pct)
+    if closeout is not None:
+        card["census_closeout"] = closeout
 
 
-def weight_window(x=None, y=None, z=None, t=None, window=None, width=None):
+def weight_window(x=None, y=None, z=None, t=None, window=None, width=None, zeros=None):
     card = mcdc.input_card.technique
     card["weight_window"] = True
 
@@ -1170,10 +1172,62 @@ def weight_window(x=None, y=None, z=None, t=None, window=None, width=None):
         ax_expand.append(2)
     if z is None:
         ax_expand.append(3)
-    window /= np.max(window)
     for ax in ax_expand:
         window = np.expand_dims(window, axis=ax)
     card["ww"] = window
+
+    # Set behavior for encountered zeros
+    # Default behavior is disable weight windows when window equals zero
+    if not (zeros is None or zeros is False):
+        card["ww_zeros"] = True
+
+    return card
+
+
+def auto_weight_window(
+    method=None,
+    ic_data="mc",
+    ic="end",
+    predictor=True,
+    pred_closures="end",
+    corrector=False,
+    corr_closures="average",
+):
+    card = mcdc.input_card.technique
+
+    # Weight window algorithm
+    if method is not None:
+        card["census_closeout"] = True
+        if method == "mcclaren":
+            card["auto_ww"] = MCCLAREN_WW
+        elif method == "semi-implicit loqd":
+            card["auto_ww"] = SEMIIMPLICIT_LOQD_WW
+        elif method == "semi-implicit loqd half":
+            card["auto_ww"] = SEMIIMPLICIT_LOQD_HALF_WW
+        else:
+            print("Unknown method!")
+
+    # Initial condition data source
+    if ic_data != "mc":
+        print("Not yet supported")
+
+    # Initial condition from average or end?
+    if ic != "end":
+        print("Not yet supported")
+
+    # Predictor step enabled?
+    card["auto_ww_predictor"] = predictor
+
+    # Predictor step closures from average or end?
+    if pred_closures != "end":
+        print("Not yet supported")
+
+    # Corrector step enabled?
+    card["auto_ww_corrector"] = corrector
+
+    # Corrector step closures from average or end?
+    if corr_closures != "average":
+        print("Not yet supported")
 
     return card
 
