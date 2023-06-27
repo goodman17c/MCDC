@@ -1225,6 +1225,9 @@ def auto_weight_window(
     # Corrector step enabled?
     card["auto_ww_corrector"] = corrector
 
+    # Corrector frequency
+    mcdc.input_card.setting["N_active"] = 200
+
     # Corrector step closures from average or end?
     if corr_closures != "average":
         print("Not yet supported")

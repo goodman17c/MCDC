@@ -671,6 +671,12 @@ def pct_combing(mcdc):
     idx_start, N_local, N = bank_scanning(bank_census, mcdc)
     idx_end = idx_start + N_local
 
+    if N == 0:
+        print("Simulation Ended Early")
+        bank_source["size"] = 0
+        simulation_end = True
+        return
+
     # Teeth distance
     td = N / M
 
@@ -2508,6 +2514,50 @@ def auto_ww_predictor(mcdc):
         phi, J = det.QD1D(mcdc, dt / 2, phi2, J, Edd)
         phi /= np.nanmax(phi)
         mcdc["technique"]["ww"][t + 1, :, 0, 0] = phi
+
+
+def auto_ww_corrector(mcdc, N_history):
+    t = mcdc["technique"]["census_idx"]
+    x = mcdc["technique"]["ww_mesh"]["x"]
+    dx = x[1:] - x[:-1]
+    Nx = len(dx)
+
+    # Weight window predictor method
+    if mcdc["technique"]["auto_ww"] == MCCLAREN_WW:
+        # Gather scalar flux from target source
+        ww = mcdc["tally"]["score"]["flux"]["mean"][0, 0, t, :, :, :, 0, 0]
+
+        # Normalize and set weight window
+        mcdc["technique"]["ww"][t, :, :, :] = ww / np.max(ww)
+
+    elif (
+        mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_WW
+        or mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_HALF_WW
+    ):
+        x = mcdc["technique"]["ww_mesh"]["x"]
+        dx = x[1:] - x[:-1]
+        t2 = mcdc["technique"]["ww_mesh"]["t"]
+        dt = t2[t + 1] - t2[t]
+        # gather scalar flux, current, and second moment
+        phi = mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t, :, 0, 0, 0, 0]
+        Jt = mcdc["tally"]["score"]["current_t"]["mean"][0, 0, t, :, 0, 0, 0]
+        Edd = (
+            mcdc["tally"]["score"]["eddington_t"]["mean"][0, 0, t + 1, :, 0, 0, 0]
+            / N_history
+        )
+        Edd[Edd > 0] = Edd[Edd > 0] / phi[Edd > 0]
+        Edd[Edd <= 0] = 0.33
+        # 0 BC
+        # Apply linear closure to find edge currents
+        J = np.zeros((len(Jt) + 1,))
+        for i in range(len(Jt) - 1):
+            J[i + 1] = Jt[i] + Jt[i + 1]
+        phi = phi / dx
+        phi2 = np.zeros((Nx + 2,))
+        phi2[1:-1] = phi
+        phi, J = det.QD1D(mcdc, dt, phi2, J, Edd)
+        phi /= np.nanmax(phi)
+        mcdc["technique"]["ww"][t, :, 0, 0] = phi
 
 
 # ==============================================================================

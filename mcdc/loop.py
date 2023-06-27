@@ -2,6 +2,7 @@ import numpy as np
 from numpy import ascontiguousarray as cga
 from numba import njit, objmode, jit
 from scipy.linalg import eig
+from mpi4py import MPI
 
 import mcdc.kernel as kernel
 import mcdc.type_ as type_
@@ -139,6 +140,13 @@ def loop_source(mcdc):
         else:
             # Add the source particle into the active bank
             kernel.add_particle(P, mcdc["bank_active"])
+
+        # Check if automatic weight windows corrector stage needs to be applied
+        if (
+            mcdc["technique"]["auto_ww_corrector"]
+            and work_idx > mcdc["setting"]["N_active"] / MPI.COMM_WORLD.Get_size()
+        ):
+            kernel.auto_ww_corrector(mcdc, work_idx)
 
         # =====================================================================
         # Run the source particle and its secondaries
