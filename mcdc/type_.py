@@ -535,6 +535,7 @@ def make_type_technique(N_particle, G, card):
     # Method
     struct += [("auto_ww", int64)]
     struct += [("auto_ww_corrector", bool_), ("auto_ww_predictor", bool_)]
+    struct += [("updates", int64)]
 
     # =========================================================================
     # Weight Roulette

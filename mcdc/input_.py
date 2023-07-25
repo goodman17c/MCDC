@@ -1190,7 +1190,7 @@ def auto_weight_window(
     ic="end",
     predictor=True,
     pred_closures="end",
-    corrector=False,
+    updates=0,
     corr_closures="average",
 ):
     card = mcdc.input_card.technique
@@ -1222,11 +1222,13 @@ def auto_weight_window(
     if pred_closures != "end":
         print("Not yet supported")
 
-    # Corrector step enabled?
-    card["auto_ww_corrector"] = corrector
+    if updates > 0:
+        # Enable Corrector step
+        card["auto_ww_corrector"] = True
+        card["updates"] = updates
 
-    # Corrector frequency
-    mcdc.input_card.setting["N_active"] = 200
+        # Corrector frequency
+        mcdc.input_card.setting["N_active"] = math.ceil(mcdc.input_card.setting["N_particle"]/(updates + 1))
 
     # Corrector step closures from average or end?
     if corr_closures != "average":

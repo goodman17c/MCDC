@@ -266,6 +266,7 @@ def prepare():
         "auto_ww",
         "auto_ww_predictor",
         "auto_ww_corrector",
+        "updates",
         "weight_roulette",
         "iQMC",
         "IC_generator",

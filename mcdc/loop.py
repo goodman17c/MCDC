@@ -72,6 +72,7 @@ def loop_main(mcdc):
             kernel.manage_particle_banks(mcdc)
 
             # Increment census index
+            mcdc["i_cycle"] = 0
             mcdc["technique"]["census_idx"] += 1
 
         # Fixed-source closeout
@@ -142,11 +143,13 @@ def loop_source(mcdc):
             kernel.add_particle(P, mcdc["bank_active"])
 
         # Check if automatic weight windows corrector stage needs to be applied
-        if (
-            mcdc["technique"]["auto_ww_corrector"]
-            and work_idx > mcdc["setting"]["N_active"] / MPI.COMM_WORLD.Get_size()
-        ):
+        if mcdc["technique"]["auto_ww_corrector"] and work_idx >= mcdc["setting"][
+            "N_active"
+        ] * (
+            mcdc["i_cycle"] + 1
+        ):  # / MPI.COMM_WORLD.Get_size()
             kernel.auto_ww_corrector(mcdc, work_idx)
+            mcdc["i_cycle"] += 1
 
         # =====================================================================
         # Run the source particle and its secondaries

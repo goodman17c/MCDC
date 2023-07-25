@@ -2,17 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import h5py
+import pandas as pd
 
-method = ["8", "11", "18", "21"]
-Nt = [20, 40, 80]
-Np = [400, 1000, 4000, 10000, 40000]
+method = ["8"]
+Np = [400, 1000, 4000, 10000]
+Np = [1000, 4000, 10000]
+updatelist = [0, 1, 2, 3, 10]
+updatelist = [1, 2, 3, 10]
 ref = ["reference.npz", "reference_40.npz", "reference_80.npz"]
-for Nti in range(1):
-    for fj in range(4):
-        for Npi in Np:
+for Npi in Np:
+    for fj in range(1, 2):
+        for updates in updatelist:
             for methodi in method:
                 output = (
-                    methodi + "_" + str(2**fj) + "_" + str(Nt[Nti]) + "_" + str(Npi)
+                    methodi + "_" + str(2**fj) + "_" + str(updates) + "_" + str(Npi)
                 )
                 # output="output"
 
@@ -20,15 +23,33 @@ for Nti in range(1):
                 # Reference solution (SS)
                 # =============================================================================
 
-                data = np.load(ref[Nti])
-                # phi_t_ref = data['phi_t']
+                data = np.load("reference.npz")
                 phi_ref = data["phi"]
+                phi_t_ref = data["phi_t"]
+                phi_x_ref = data["phi_x"]
 
                 with h5py.File(output + ".h5", "r") as f:
                     phi = f["tally/flux/mean"][:]
                     phi_sd = f["tally/flux/sdev"][:]
+                    phit = f["tally/flux-t/mean"][:]
+                    phit_sd = f["tally/flux-t/sdev"][:]
+                    phix = f["tally/flux-x/mean"][:]
+                    phix_sd = f["tally/flux-x/sdev"][:]
+                    current = f["tally/current/mean"][:]
+                    current_sd = f["tally/current/sdev"][:]
+                    currentt = f["tally/current-t/mean"][:]
+                    currentt_sd = f["tally/current-t/sdev"][:]
+                    currentx = f["tally/current-x/mean"][:]
+                    currentx_sd = f["tally/current-x/sdev"][:]
+                    eddington = f["tally/eddington/mean"][:]
+                    eddington_sd = f["tally/eddington/sdev"][:]
+                    eddingtont = f["tally/eddington-t/mean"][:]
+                    eddingtont_sd = f["tally/eddington-t/sdev"][:]
+                    eddingtonx = f["tally/eddington-x/mean"][:]
+                    eddingtonx_sd = f["tally/eddington-x/sdev"][:]
                     n = f["tally/n/mean"][:]
                     n_t = f["tally/n-t/mean"][:]
+                    n_x = f["tally/n-t/mean"][:]
                     ww = f["ww/center"][:]
                     x = f["tally/grid/x"][:]
                     t = f["tally/grid/t"][:]
@@ -39,9 +60,48 @@ for Nti in range(1):
                 t_mid = 0.5 * (t[:-1] + t[1:])
                 K = len(dt)
                 J = len(x_mid)
+                
+                # Load deterministic iteration data
+                phi_det = np.zeros((K, updates+1, J))
+                J_det = np.zeros((K, updates+1, J+1))
+                Edd_det = np.zeros((K, updates+1, J))
+                with open(output + "_det.txt", "r") as f:
+                    for k in range(K):
+                        for u in range(updates + 1):
+                            if (k == 0 and u == 0):
+                                continue
+                            f.readline()
+                            f.readline()
+                            f.readline()
+                            f.readline()
+                            for i in range(J):
+                                line = f.readline().split()
+                                phi_det[k][u][i] = float(line[2])
+                                J_det[k][u][i] = float(line[6])
+                                Edd_det[k][u][i] = float(line[3])
+                            line = f.readline().split()
+                            J_det[k][u][J] = float(line[2])
+                            f.readline()
+
                 for k in range(K):
                     phi[k] /= dx * dt[k]
                     phi_sd[k] /= dx * dt[k]
+                    phit[k] /= dx
+                    phit_sd[k] /= dx
+                    phix[k] /= dt[k]
+                    phix_sd[k] /= dt[k]
+                    current[k] /= dx * dt[k]
+                    current_sd[k] /= dx * dt[k]
+                    currentt[k] /= dx
+                    currentt_sd[k] /= dx
+                    currentx[k] /= dt[k]
+                    currentx_sd[k] /= dt[k]
+                    eddington[k] /= dx * dt[k]
+                    eddington_sd[k] /= dx * dt[k]
+                    eddingtont[k] /= dx
+                    eddingtont_sd[k] /= dx
+                    eddingtonx[k] /= dt[k]
+                    eddingtonx_sd[k] /= dt[k]
 
                 FOM = phi * phi / phi_sd / phi_sd / np.sum(n) / Npi
                 FOM[n == 0] = 0
@@ -90,85 +150,127 @@ for Nti in range(1):
                         np.sum(np.power(phi_sd[k], 2)) / np.sum(np.power(phi[k], 2))
                     )
 
+                # Write data to large matrix
+                # A column for each parameter on a single time step 4 MC scalar fluxs, ww, 3 currents, 3 eddington
+                columnlist = [
+                    "x_mid",
+                    "ww",
+                    "phi",
+                    "phi_sd",
+                    "phi_ref",
+                    "phi_t",
+                    "phi_t_sd",
+                    "phi_t_ref",
+                    "x",
+                    "phi_x",
+                    "phi_x_sd",
+                    "phi_x_ref",
+                ]
+                columnlistJ = [
+                    "x_mid",
+                    "current",
+                    "current_sd",
+                    "current_t",
+                    "current_t_sd",
+                    "x",
+                    "current_x",
+                    "current_x_sd",
+                ]
+                columnlistEdd = [
+                    "x_mid",
+                    "Eddington",
+                    "Eddington_sd",
+                    "Eddington_t",
+                    "Eddington_t_sd",
+                    "x",
+                    "Eddington_x",
+                    "Eddington_x_sd",
+                ]
+                print(np.shape(phi[0]))
+                data = np.full((K * (J + 2), 12), np.nan)
+                dataJ = np.full((K * (J + 2), 8), np.nan)
+                dataEdd = np.full((K * (J + 2), 8), np.nan)
+                for k in range(K):
+                    data[k * (J + 2), 0] = t_mid[k]
+                    for i in range(J):
+                        data[k * (J + 2) + i + 1, 0] = x_mid[i]
+                    for i in range(J):
+                        data[k * (J + 2) + i + 1, 1] = ww[k][i]
+                    for i in range(J):
+                        data[k * (J + 2) + i + 1, 2] = phi[k][i]
+                    for i in range(J):
+                        data[k * (J + 2) + i + 1, 3] = phi_sd[k][i]
+                    for i in range(J):
+                        data[k * (J + 2) + i + 1, 4] = phi_ref[k][i]
+                    for i in range(J):
+                        data[k * (J + 2) + i + 1, 5] = phit[k + 1][i]
+                    for i in range(J):
+                        data[k * (J + 2) + i + 1, 6] = phit_sd[k + 1][i]
+                    for i in range(J):
+                        data[k * (J + 2) + i + 1, 7] = phi_t_ref[k][i]
+                    for i in range(J + 1):
+                        data[k * (J + 2) + i + 1, 8] = x[i]
+                    for i in range(J + 1):
+                        data[k * (J + 2) + i + 1, 9] = phix[k][i]
+                    for i in range(J + 1):
+                        data[k * (J + 2) + i + 1, 10] = phix_sd[k][i]
+                    for i in range(J + 1):
+                        data[k * (J + 2) + i + 1, 11] = phi_x_ref[k][i]
+
+                    dataJ[k * (J + 2), 0] = t_mid[k]
+                    for i in range(J):
+                        dataJ[k * (J + 2) + i + 1, 0] = x_mid[i]
+                    for i in range(J):
+                        dataJ[k * (J + 2) + i + 1, 1] = current[k][i][0]
+                    for i in range(J):
+                        dataJ[k * (J + 2) + i + 1, 2] = current_sd[k][i][0]
+                    for i in range(J):
+                        dataJ[k * (J + 2) + i + 1, 3] = currentt[k + 1][i][0]
+                    for i in range(J):
+                        dataJ[k * (J + 2) + i + 1, 4] = currentt_sd[k+1][i][0]
+                    for i in range(J + 1):
+                        dataJ[k * (J + 2) + i + 1, 5] = x[i]
+                    for i in range(J + 1):
+                        dataJ[k * (J + 2) + i + 1, 6] = currentx[k][i][0]
+                    for i in range(J + 1):
+                        dataJ[k * (J + 2) + i + 1, 7] = currentx_sd[k][i][0]
+
+                    dataEdd[k * (J + 2), 0] = t_mid[k]
+                    for i in range(J):
+                        dataEdd[k * (J + 2) + i + 1, 0] = x_mid[i]
+                    for i in range(J):
+                        dataEdd[k * (J + 2) + i + 1, 1] = eddington[k][i][0]/phi[k][i]
+                    for i in range(J):
+                        dataEdd[k * (J + 2) + i + 1, 2] = eddington_sd[k][i][0]/phi[k][i]
+                    for i in range(J):
+                        dataEdd[k * (J + 2) + i + 1, 3] = eddingtont[k + 1][i][0]/phit[k+1][i]
+                    for i in range(J):
+                        dataEdd[k * (J + 2) + i + 1, 4] = eddingtont_sd[k+1][i][0]/phit[k+1][i]
+                    for i in range(J + 1):
+                        dataEdd[k * (J + 2) + i + 1, 5] = x[i]
+                    for i in range(J + 1):
+                        dataEdd[k * (J + 2) + i + 1, 6] = eddingtonx[k][i][0]/phix[k][i]
+                    for i in range(J + 1):
+                        dataEdd[k * (J + 2) + i + 1, 7] = eddingtonx_sd[k][i][0]/phix[k][i]
+
                 # =============================================================================
                 # Print results
                 # =============================================================================
 
-                def print_var(outfile, var):
-                    outfile.write("      ")
-                    outfile.write("   ix   ")
-                    for i in range(J):
-                        outfile.write("%12d" % (i + 1))
-                    outfile.write("\n")
-                    outfile.write("   it ")
-                    outfile.write("  t/x   ")
-                    for i in range(J):
-                        outfile.write("%12.2f" % x_mid[i])
-                    outfile.write("\n")
-                    for j in range(K):
-                        outfile.write("%6d" % (j + 1))
-                        outfile.write("%8.2f" % t_mid[j])
-                        for i in range(J):
-                            outfile.write("%12.4e" % var[j][i])
-                        outfile.write("\n")
-                    outfile.write("\n")
+                with pd.ExcelWriter(output + ".xlsx") as writer:
+                    # Complete data in time and space
+                    df = pd.DataFrame(data, columns=columnlist)
+                    df.to_excel(writer, sheet_name="Scalar Flux")
+                    df = pd.DataFrame(dataJ, columns=columnlistJ)
+                    df.to_excel(writer, sheet_name="Current")
+                    df = pd.DataFrame(dataEdd, columns=columnlistEdd)
+                    df.to_excel(writer, sheet_name="Eddington")
 
-                def print_int(outfile, var):
-                    for i in range(K):
-                        outfile.write("%12.4e" % var[i])
-                    outfile.write("\n")
+                    # Data normed over space
 
-                with open(output + ".txt", "w") as outfile:
-                    # Integral Quantities
-                    outfile.write("\n       it   ")
-                    for i in range(K):
-                        outfile.write("%12d" % (i + 1))
-                    outfile.write("\n")
-                    outfile.write("       t    ")
-                    print_int(outfile, t_mid)
-                    outfile.write("integral phi")
-                    print_int(outfile, phi_int)
-                    outfile.write("integral n  ")
-                    print_int(outfile, n_int)
-                    outfile.write("integral n_t")
-                    print_int(outfile, n_int)
-                    outfile.write("Max Rel Err ")
-                    print_int(outfile, max_rel_err)
-                    outfile.write("Err Inf Norm")
-                    print_int(outfile, err_inf)
-                    outfile.write("Err L1 Norm ")
-                    print_int(outfile, err_L1)
-                    outfile.write("Err L2 Norm ")
-                    print_int(outfile, err_L2)
-                    outfile.write("Err 2 Norm  ")
-                    print_int(outfile, err_2)
-                    outfile.write("Rel Err Inf ")
-                    print_int(outfile, rel_err_inf)
-                    outfile.write("Rel Err L1  ")
-                    print_int(outfile, rel_err_L1)
-                    outfile.write("Rel Err L2  ")
-                    print_int(outfile, rel_err_L2)
-                    outfile.write("Rel Err 2   ")
-                    print_int(outfile, rel_err_2)
-                    outfile.write("Stat Err    ")
-                    print_int(outfile, stat_err)
+                    # Copy deterministic statistic from file for each update (predictor or corrector)
 
-                    # Space and Time data
-                    outfile.write("\n")
-                    outfile.write("phi\n")
-                    print_var(outfile, phi)
-                    outfile.write("phi_reference\n")
-                    print_var(outfile, phi_ref)
-                    outfile.write("phi_sd\n")
-                    print_var(outfile, phi_sd)
-                    outfile.write("n\n")
-                    print_var(outfile, n)
-                    outfile.write("FOM\n")
-                    print_var(outfile, FOM)
-                    outfile.write("n_t\n")
-                    print_var(outfile, n_t)
-                    outfile.write("weight window\n")
-                    print_var(outfile, ww)
+                    # Run Overview statistics and flags
 
                 # =============================================================================
                 # Animate results

@@ -6,14 +6,13 @@ Nt = [20, 40, 80]
 ref = ["reference.npz", "reference_40.npz", "reference_80.npz"]
 
 
-method = ["8", "11", "18", "21"]
+method = ["A1-1", "B1-1"]
 methodname = [
-    "Semi-Implicit LOQD full",
-    "Semi-Implicit LOQD half",
-    "Semi-Implicit LOQD full corrector",
-    "Semi-Implicit LOQD half corrector",
+    "Method A1-1",
+    "Method B1-1",
 ]
-Np = [400, 1000, 4000, 10000, 40000]
+Np = [400, 1000, 4000, 10000]
+updatelist = [0,1,2,3,10]
 
 for Nti in range(1):
     data = np.load(ref[Nti])
@@ -116,7 +115,14 @@ for Nti in range(1):
 
     for Npi in Np:
         try:
-            add_out_to_stat_lists("1_" + str(Nt[Nti]) + "_" + str(Npi))
+            add_out_to_stat_lists("Analog_" + str(Npi))
+            index_list.append("Analog" + " particles=" + str(Npi))
+        except:
+            pass
+
+    for Npi in Np:
+        try:
+            add_out_to_stat_lists("IC_" + str(Npi))
             index_list.append("Implicit Capture" + " particles=" + str(Npi))
         except:
             pass
@@ -124,44 +130,28 @@ for Nti in range(1):
     for methodi in range(len(method)):
         for fj in range(3):
             for Npi in Np:
-                output = (
-                    method[methodi]
-                    + "_"
-                    + str(2**fj)
-                    + "_"
-                    + str(Nt[Nti])
-                    + "_"
-                    + str(Npi)
-                )
-                try:
-                    add_out_to_stat_lists(output)
-                    index_list.append(
-                        methodname[methodi]
-                        + " width="
+                for updates in updatelist:
+                    output = (
+                        method[methodi]
+                        + "_"
                         + str(2**fj)
-                        + " particles="
+                        + "_"
+                        + str(updates)
+                        + "_"
                         + str(Npi)
                     )
-                except:
-                    pass
+                    try:
+                        add_out_to_stat_lists(output)
+                        index_list.append(
+                            methodname[methodi]
+                            + " updates=" + str(updates)
+                            + " width=" + str(2**fj)
+                            + " particles=" + str(Npi)
+                        )
+                    except:
+                        pass
 
-    for Npi in Np:
-        try:
-            add_out_to_stat_lists("0_" + str(Nt[Nti]) + "_" + str(Npi))
-            index_list.append("Analog" + " particles=" + str(Npi))
-        except:
-            pass
 
-    for fj in range(3):
-        for Npi in Np:
-            try:
-                output = "10" + "_" + str(2**fj) + "_" + str(Nt[Nti]) + "_" + str(Npi)
-                add_out_to_stat_lists(output)
-                index_list.append(
-                    "Middle of TS" + " width=" + str(2**fj) + " particles=" + str(Npi)
-                )
-            except:
-                pass
 
     with pd.ExcelWriter("Summary_" + str(Nt[Nti]) + ".xlsx") as writer:
         df = pd.DataFrame(n_t_int_list, index=index_list, columns=range(1, Nt[Nti] + 1))

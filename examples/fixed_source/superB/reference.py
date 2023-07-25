@@ -11,11 +11,11 @@ c = 1.1
 i = complex(0, 1)
 
 # Spatial grid
-J = 201
-x = np.linspace(-20.1, 20.1, J + 1)
+J = 21
+x = np.linspace(-21, 21, J + 1)
 
 # Time grid
-K = 80
+K = 20
 t = np.linspace(0.0, 20.0, K + 1)
 
 
@@ -76,4 +76,4 @@ phi_edge = np.nan_to_num(phi_edge)
 phi_face = np.nan_to_num(phi_face)
 phi_avg = np.nan_to_num(phi_avg)
 
-np.savez("reference_80.npz", x=x, t=t, phi=phi_avg, phi_x=phi_face, phi_t=phi_edge)
+np.savez("reference_21x20.npz", x=x, t=t, phi=phi_avg, phi_x=phi_face, phi_t=phi_edge)

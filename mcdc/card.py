@@ -132,6 +132,7 @@ class InputCard:
             "auto_ww": 0,
             "auto_ww_predictor": False,
             "auto_ww_corrector": False,
+            "updates": 0,
             "weight_roulette": False,
             "wr_threshold": 0.0,
             "wr_chance": 1.0,
