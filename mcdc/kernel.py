@@ -2466,7 +2466,7 @@ def auto_ww_predictor(mcdc):
         # Normalize and set weight window
         mcdc["technique"]["ww"][t + 1, :, :, :] = ww / np.max(ww)
 
-    elif mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_WW:
+    else:
         x = mcdc["technique"]["ww_mesh"]["x"]
         dx = x[1:] - x[:-1]
         t2 = mcdc["technique"]["ww_mesh"]["t"]
@@ -2474,49 +2474,37 @@ def auto_ww_predictor(mcdc):
             t2[mcdc["technique"]["census_idx"] + 1]
             - t2[mcdc["technique"]["census_idx"]]
         )
+        if (mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_HALF_WW or
+            mcdc["technique"]["auto_ww"] == LOQD_RK_HEUN_WW):
+            dt = dt / 2
         # gather scalar flux, current, and second moment
-        phi = np.copy(mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0])
-        Jt = np.copy(mcdc["tally"]["score"]["current_t"]["mean"][0, 0, t + 1, :, 0, 0, 0])
-        #Edd = np.copy(mcdc["tally"]["score"]["eddington_t"]["mean"][0, 0, t + 1, :, 0, 0, 0])
-        Edd = np.copy(mcdc["tally"]["score"]["eddington"]["mean"][0, 0, t, :, 0, 0, 0])
-        Edd[Edd > 0] = Edd[Edd > 0] / phi[Edd > 0]
-        Edd[Edd <= 0] = 0.33
-        # 0 BC
-        phi = phi / dx
-        Jt = Jt / dx
-        # Apply linear closure to find edge currents
-        J = np.zeros((len(Jt) + 1,))
-        for i in range(len(Jt) - 1):
-            J[i + 1] = (Jt[i] + Jt[i + 1])/2
-        phi2 = np.zeros((Nx + 2,))
-        phi2[1:-1] = phi
-        phi, J = det.QD1D(mcdc, dt, phi2, J, Edd)
-        phi /= np.nanmax(phi)
-        mcdc["technique"]["ww"][t + 1, :, 0, 0] = phi
-
-    elif mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_HALF_WW:
-        t2 = mcdc["technique"]["ww_mesh"]["t"]
-        dt = (
-            t2[mcdc["technique"]["census_idx"] + 1]
-            - t2[mcdc["technique"]["census_idx"]]
+        phi = np.copy(
+            mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0]
         )
-        # gather scalar flux, current, and second moment
-        phi = np.copy(mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0])
-        Jt = np.copy(mcdc["tally"]["score"]["current_t"]["mean"][0, 0, t + 1, :, 0, 0, 0])
-        Edd = np.copy(mcdc["tally"]["score"]["eddington_t"]["mean"][0, 0, t + 1, :, 0, 0, 0])
-        #Edd = mcdc["tally"]["score"]["eddington"]["mean"][0, 0, t + 1, :, 0, 0, 0]
-        Edd[Edd > 0] = Edd[Edd > 0] / phi[Edd > 0]
-        Edd[Edd <= 0] = 0.33
+        phiold = np.copy(
+            mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t, :, 0, 0, 0, 0]
+        )
+        Jt = np.copy(
+            mcdc["tally"]["score"]["current_t"]["mean"][0, 0, t + 1, :, 0, 0, 0]
+        )
+        Edd = (
+            mcdc["tally"]["score"]["eddington_t"]["mean"][0, 0, t + 1, :, 0, 0, 0]
+            / mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0]
+        )
         # 0 BC
         phi = phi / dx
         Jt = Jt / dx
+        phiold = phiold / dx
         # Apply linear closure to find edge currents
         J = np.zeros((len(Jt) + 1,))
         for i in range(len(Jt) - 1):
-            J[i + 1] = (Jt[i] + Jt[i + 1])/2
+            J[i + 1] = (Jt[i] + Jt[i + 1]) / 2
         phi2 = np.zeros((Nx + 2,))
         phi2[1:-1] = phi
-        phi, J = det.QD1D(mcdc, dt / 2, phi2, J, Edd)
+        if (mcdc["technique"]["auto_ww"] == LOQD_RK_HEUN_WW):
+            phi, J = det.QD1DFE(mcdc, dt, phi2, J, Edd, phiold)
+        else:
+            phi, J = det.QD1D(mcdc, dt, phi2, J, Edd)
         phi /= np.nanmax(phi)
         mcdc["technique"]["ww"][t + 1, :, 0, 0] = phi
 
@@ -2539,6 +2527,8 @@ def auto_ww_corrector(mcdc, N_history):
     elif (
         mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_WW
         or mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_HALF_WW
+        or mcdc["technique"]["auto_ww"] == CRANK_NICHOLSON_LOQD_WW
+        or mcdc["technique"]["auto_ww"] == LOQD_RK_HEUN_WW
     ):
         x = mcdc["technique"]["ww_mesh"]["x"]
         dx = x[1:] - x[:-1]
@@ -2546,27 +2536,34 @@ def auto_ww_corrector(mcdc, N_history):
         dt = t2[t + 1] - t2[t]
         # gather scalar flux, current, and second moment
         phi = np.copy(mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t, :, 0, 0, 0, 0])
+        phinew = (mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0]
+            / mcdc["tally"]["score"]["flux_t"]["bin"][0, 0, t + 1, :, 0, 0, 0, 0])
         Jt = np.copy(mcdc["tally"]["score"]["current_t"]["mean"][0, 0, t, :, 0, 0, 0])
         Edd = (
             mcdc["tally"]["score"]["eddington_t"]["mean"][0, 0, t + 1, :, 0, 0, 0]
             / mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0]
         )
-        #Edd = (
+        Edd0 = np.copy(mcdc["tally"]["score"]["eddington_t"]["mean"][0, 0, t, :, 0, 0, 0])
+        # Edd = (
         #    mcdc["tally"]["score"]["eddington"]["mean"][0, 0, t, :, 0, 0, 0]
         #    / mcdc["tally"]["score"]["flux"]["mean"][0, 0, t, :, 0, 0, 0, 0]
-        #)
-        Edd[np.isnan(Edd)] = 0.33
-        Edd[Edd<1E-2] = 1E-2
+        # )
         # 0 BC
         phi = phi / dx
         Jt = Jt / dx
+        phinew=phinew / dx
         # Apply linear closure to find edge currents
         J = np.zeros((len(Jt) + 1,))
         for i in range(len(Jt) - 1):
-            J[i + 1] = (Jt[i] + Jt[i + 1])/2
+            J[i + 1] = (Jt[i] + Jt[i + 1]) / 2
         phi2 = np.zeros((Nx + 2,))
         phi2[1:-1] = phi
-        phi, J = det.QD1D(mcdc, dt, phi2, J, Edd)
+        if mcdc["technique"]["auto_ww"] == CRANK_NICHOLSON_LOQD_WW:
+            phi, J = det.QD1DCN(mcdc, phi2, J, Edd, Edd0)
+        elif mcdc["technique"]["auto_ww"] == LOQD_RK_HEUN_WW:
+            phi, J = det.QD1DHeun(mcdc, phi2, J, Edd, Edd0,phinew)
+        else:
+            phi, J = det.QD1D(mcdc, dt, phi2, J, Edd)
         phi /= np.nanmax(phi)
         mcdc["technique"]["ww"][t, :, 0, 0] = phi
 

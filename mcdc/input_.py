@@ -1204,6 +1204,10 @@ def auto_weight_window(
             card["auto_ww"] = SEMIIMPLICIT_LOQD_WW
         elif method == "semi-implicit loqd half":
             card["auto_ww"] = SEMIIMPLICIT_LOQD_HALF_WW
+        elif method == "crank-nicholson loqd":
+            card["auto_ww"] = CRANK_NICHOLSON_LOQD_WW 
+        elif method == "heun loqd":
+            card["auto_ww"] = LOQD_RK_HEUN_WW 
         else:
             print("Unknown method!")
 
@@ -1228,7 +1232,9 @@ def auto_weight_window(
         card["updates"] = updates
 
         # Corrector frequency
-        mcdc.input_card.setting["N_active"] = math.ceil(mcdc.input_card.setting["N_particle"]/(updates + 1))
+        mcdc.input_card.setting["N_active"] = math.ceil(
+            mcdc.input_card.setting["N_particle"] / (updates + 1)
+        )
 
     # Corrector step closures from average or end?
     if corr_closures != "average":
