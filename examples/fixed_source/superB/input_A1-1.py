@@ -67,7 +67,7 @@ for Np in Nplist:
                 N_particle=Np,
                 time_boundary=20.1,
                 active_bank_buff=2e6,
-                census_bank_buff=1e2,
+                census_bank_buff=1e3,
                 output="A1-1_" + str(2**j) + "_" + str(updates) + "_" + str(Np),
             )
 
@@ -79,7 +79,7 @@ for Np in Nplist:
                 width=1.0 * (2**j),
                 window=phi_ref,
             )
-            mcdc.implicit_capture()
+            mcdc.branchless_collision()
             mcdc.auto_weight_window(
                 method="semi-implicit loqd",
                 updates=updates,

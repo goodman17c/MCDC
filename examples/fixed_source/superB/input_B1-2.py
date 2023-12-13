@@ -79,7 +79,7 @@ for Np in Nplist:
                 width=1.0 * (2**j),
                 window=phi_ref,
             )
-            mcdc.implicit_capture()
+            mcdc.branchless_collision()
             mcdc.auto_weight_window(
                 method="semi-implicit loqd half",
                 updates=updates,

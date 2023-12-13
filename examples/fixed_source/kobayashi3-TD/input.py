@@ -60,11 +60,13 @@ mcdc.source(
 # =============================================================================
 
 # Tally: z-integrated flux (X-Y section view)
+t=np.linspace(0.0, 200.0, 21)
+mcdc.census(t=t[1:], pct="combing")
 mcdc.tally(
     scores=["flux"],
     x=np.linspace(0.0, 60.0, 61),
     y=np.linspace(0.0, 100.0, 101),
-    t=np.linspace(0.0, 200.0, 21),
+    t=t,
 )
 
 # Setting

@@ -2461,8 +2461,8 @@ def auto_ww_predictor(mcdc):
     # Weight window predictor method
     if mcdc["technique"]["auto_ww"] == MCCLAREN_WW:
         # Gather scalar flux from target source
-        ww = mcdc["tally"]["score"]["flux"]["mean"][0, 0, t, :, :, :, 0, 0]
-
+        ww = mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, :, :, 0, 0]
+        ww = det.LinearSF(ww)
         # Normalize and set weight window
         mcdc["technique"]["ww"][t + 1, :, :, :] = ww / np.max(ww)
 
@@ -2519,10 +2519,10 @@ def auto_ww_corrector(mcdc, N_history):
     # Weight window update method
     if mcdc["technique"]["auto_ww"] == MCCLAREN_WW:
         # Gather scalar flux from target source
-        ww = mcdc["tally"]["score"]["flux"]["mean"][0, 0, t, :, :, :, 0, 0] / N_history
-
+        ww = (mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0] / N_history)
+        ww = det.LinearSF(ww)
         # Normalize and set weight window
-        mcdc["technique"]["ww"][t, :, :, :] = ww / np.max(ww)
+        mcdc["technique"]["ww"][t, :, 0, 0] = ww / np.max(ww)
 
     elif (
         mcdc["technique"]["auto_ww"] == SEMIIMPLICIT_LOQD_WW
@@ -2536,8 +2536,7 @@ def auto_ww_corrector(mcdc, N_history):
         dt = t2[t + 1] - t2[t]
         # gather scalar flux, current, and second moment
         phi = np.copy(mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t, :, 0, 0, 0, 0])
-        phinew = (mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0]
-            / mcdc["tally"]["score"]["flux_t"]["bin"][0, 0, t + 1, :, 0, 0, 0, 0])
+        phinew = (mcdc["tally"]["score"]["flux_t"]["mean"][0, 0, t + 1, :, 0, 0, 0, 0] / N_history)
         Jt = np.copy(mcdc["tally"]["score"]["current_t"]["mean"][0, 0, t, :, 0, 0, 0])
         Edd = (
             mcdc["tally"]["score"]["eddington_t"]["mean"][0, 0, t + 1, :, 0, 0, 0]

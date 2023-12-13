@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 import h5py
 import pandas as pd
 
-method = ["A1-1","B1-1"]
+method = ["A1-1", "B1-1", "C1-1"]
 Np = [400, 1000, 4000, 10000]
 updatelist = [0, 1, 2, 3, 10]
 
@@ -50,28 +50,35 @@ def process(output, updates):
     t_mid = 0.5 * (t[:-1] + t[1:])
     K = len(dt)
     J = len(x_mid)
-    
+
     # Load deterministic iteration data
-    phi_det = np.full((K, updates+1, J), np.nan)
-    J_det = np.full((K, updates+1, J + 1), np.nan)
-    Edd_det = np.full((K, updates+1, J), np.nan)
+    phi_det = np.full((K, updates + 1, J), np.nan)
+    phi0_det = np.full((K, J), np.nan)
+    J_det = np.full((K, updates + 1, J + 1), np.nan)
+    J0_det = np.full((K, J + 1), np.nan)
+    Edd0_det = np.full((K, updates + 1, J), np.nan)
+    Edd_det = np.full((K, updates + 1, J), np.nan)
     with open(output + "_det.txt", "r") as f:
         for k in range(K):
             for u in range(updates + 1):
-                if (k == 0 and u == 0):
+                if k == 0 and u == 0:
                     continue
-                #print(str(k)+" " + str(u))
+                # print(str(k)+" " + str(u))
                 f.readline()
-                #print(line)
+                # print(line)
                 f.readline()
                 f.readline()
                 f.readline()
                 for i in range(J):
                     line = f.readline().split()
+                    phi0_det[k][i] = float(line[1])
                     phi_det[k][u][i] = float(line[2])
-                    J_det[k][u][i] = float(line[6])
-                    Edd_det[k][u][i] = float(line[3])
+                    J0_det[k][i] = float(line[6])
+                    J_det[k][u][i] = float(line[7])
+                    Edd0_det[k][u][i] = float(line[3])
+                    Edd_det[k][u][i] = float(line[4])
                 line = f.readline().split()
+                J0_det[k][J] = float(line[1])
                 J_det[k][u][J] = float(line[2])
                 f.readline()
 
@@ -97,14 +104,7 @@ def process(output, updates):
 
     FOM = phi * phi / phi_sd / phi_sd / np.sum(n) / Npi
     FOM[n == 0] = 0
-    newFOM = (
-        phi_ref
-        * phi_ref
-        / (phi - phi_ref)
-        / (phi - phi_ref)
-        / np.sum(n)
-        / Npi
-    )
+    newFOM = phi_ref * phi_ref / (phi - phi_ref) / (phi - phi_ref) / np.sum(n) / Npi
     newFOM[phi_ref == 0] = 0
 
     # Write data to large matrix
@@ -143,6 +143,7 @@ def process(output, updates):
         "x",
         "current_x",
         "current_x_sd",
+        "current_tx",
         "current_det_0",
         "current_det_1",
         "current_det_2",
@@ -164,22 +165,33 @@ def process(output, updates):
         "x",
         "Eddington_x",
         "Eddington_x_sd",
+        "Eddington_raw_0",
         "Eddington_det_0",
+        "Eddington_raw_1",
         "Eddington_det_1",
+        "Eddington_raw_2",
         "Eddington_det_2",
+        "Eddington_raw_3",
         "Eddington_det_3",
+        "Eddington_raw_4",
         "Eddington_det_4",
+        "Eddington_raw_5",
         "Eddington_det_5",
+        "Eddington_raw_6",
         "Eddington_det_6",
+        "Eddington_raw_7",
         "Eddington_det_7",
+        "Eddington_raw_8",
         "Eddington_det_8",
+        "Eddington_raw_9",
         "Eddington_det_9",
+        "Eddington_raw_10",
         "Eddington_det_10",
     ]
     print(np.shape(phi[0]))
-    data = np.full((K * (J + 2), 13+updates), np.nan)
-    dataJ = np.full((K * (J + 2), 9 + updates), np.nan)
-    dataEdd = np.full((K * (J + 2), 9 + updates), np.nan)
+    data = np.full((K * (J + 2), 13 + updates), np.nan)
+    dataJ = np.full((K * (J + 2), 10 + updates), np.nan)
+    dataEdd = np.full((K * (J + 2), 10 + 2 * updates), np.nan)
     for k in range(K):
         data[k * (J + 2), 0] = t_mid[k]
         for i in range(J):
@@ -206,7 +218,7 @@ def process(output, updates):
             data[k * (J + 2) + i + 1, 10] = phix_sd[k][i]
         for i in range(J + 1):
             data[k * (J + 2) + i + 1, 11] = phi_x_ref[k][i]
-        for u in range(updates+1):
+        for u in range(updates + 1):
             for i in range(J):
                 data[k * (J + 2) + i + 1, 12 + u] = phi_det[k][u][i]
 
@@ -220,37 +232,42 @@ def process(output, updates):
         for i in range(J):
             dataJ[k * (J + 2) + i + 1, 3] = currentt[k + 1][i][0]
         for i in range(J):
-            dataJ[k * (J + 2) + i + 1, 4] = currentt_sd[k+1][i][0]
+            dataJ[k * (J + 2) + i + 1, 4] = currentt_sd[k + 1][i][0]
         for i in range(J + 1):
             dataJ[k * (J + 2) + i + 1, 5] = x[i]
         for i in range(J + 1):
             dataJ[k * (J + 2) + i + 1, 6] = currentx[k][i][0]
         for i in range(J + 1):
             dataJ[k * (J + 2) + i + 1, 7] = currentx_sd[k][i][0]
-        for u in range(updates+1):
-            for i in range(J+1):
-                dataJ[k * (J + 2) + i + 1, 8 + u] = J_det[k][u][i]
+        for i in range(J + 1):
+            dataJ[k * (J + 2) + i + 1, 8] = J0_det[k][i]
+        for u in range(updates + 1):
+            for i in range(J + 1):
+                dataJ[k * (J + 2) + i + 1, 9 + u] = J_det[k][u][i]
 
         dataEdd[k * (J + 2), 0] = t_mid[k]
         for i in range(J):
             dataEdd[k * (J + 2) + i + 1, 0] = x_mid[i]
         for i in range(J):
-            dataEdd[k * (J + 2) + i + 1, 1] = eddington[k][i][0]/phi[k][i]
+            dataEdd[k * (J + 2) + i + 1, 1] = eddington[k][i][0] / phi[k][i]
         for i in range(J):
-            dataEdd[k * (J + 2) + i + 1, 2] = eddington_sd[k][i][0]/phi[k][i]
+            dataEdd[k * (J + 2) + i + 1, 2] = eddington_sd[k][i][0] / phi[k][i]
         for i in range(J):
-            dataEdd[k * (J + 2) + i + 1, 3] = eddingtont[k + 1][i][0]/phit[k+1][i]
+            dataEdd[k * (J + 2) + i + 1, 3] = eddingtont[k + 1][i][0] / phit[k + 1][i]
         for i in range(J):
-            dataEdd[k * (J + 2) + i + 1, 4] = eddingtont_sd[k+1][i][0]/phit[k+1][i]
+            dataEdd[k * (J + 2) + i + 1, 4] = (
+                eddingtont_sd[k + 1][i][0] / phit[k + 1][i]
+            )
         for i in range(J + 1):
             dataEdd[k * (J + 2) + i + 1, 5] = x[i]
         for i in range(J + 1):
-            dataEdd[k * (J + 2) + i + 1, 6] = eddingtonx[k][i][0]/phix[k][i]
+            dataEdd[k * (J + 2) + i + 1, 6] = eddingtonx[k][i][0] / phix[k][i]
         for i in range(J + 1):
-            dataEdd[k * (J + 2) + i + 1, 7] = eddingtonx_sd[k][i][0]/phix[k][i]
-        for u in range(updates+1):
+            dataEdd[k * (J + 2) + i + 1, 7] = eddingtonx_sd[k][i][0] / phix[k][i]
+        for u in range(updates + 1):
             for i in range(J):
-                dataEdd[k * (J + 2) + i + 1, 8 + u] = Edd_det[k][u][i]
+                dataEdd[k * (J + 2) + i + 1, 8 + 2 * u] = Edd0_det[k][u][i]
+                dataEdd[k * (J + 2) + i + 1, 8 + 2 * u + 1] = Edd_det[k][u][i]
 
     # =============================================================================
     # Print results
@@ -258,18 +275,21 @@ def process(output, updates):
 
     with pd.ExcelWriter(output + ".xlsx") as writer:
         # Complete data in time and space
-        df = pd.DataFrame(data, columns=columnlist[:(13+updates)])
+        df = pd.DataFrame(data, columns=columnlist[: (13 + updates)])
         df.to_excel(writer, sheet_name="Scalar Flux")
-        df = pd.DataFrame(dataJ, columns=columnlistJ[:(9+updates)])
+        df = pd.DataFrame(dataJ, columns=columnlistJ[: (10 + updates)])
         df.to_excel(writer, sheet_name="Current")
-        df = pd.DataFrame(dataEdd, columns=columnlistEdd[:(9+updates)])
+        df = pd.DataFrame(dataEdd, columns=columnlistEdd[: (10 + 2 * updates)])
         df.to_excel(writer, sheet_name="Eddington")
+        df = pd.DataFrame(phi)
+        df.to_excel(writer, sheet_name="Plotting")
 
         # Data normed over space
 
         # Copy deterministic statistic from file for each update (predictor or corrector)
 
         # Run Overview statistics and flags
+
 
 for Npi in Np:
     for fj in range(1, 2):

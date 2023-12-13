@@ -66,7 +66,7 @@ for Np in Nplist:
         time_boundary=20.1,
         active_bank_buff=2e6,
         census_bank_buff=1e2,
-        output="Analog_"  + str(Np),
+        output="Analog_" + str(Np),
     )
 
     mcdc.census(t=t[1:], pct="combing")

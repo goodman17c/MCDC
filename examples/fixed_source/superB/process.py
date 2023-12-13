@@ -60,15 +60,15 @@ for Npi in Np:
                 t_mid = 0.5 * (t[:-1] + t[1:])
                 K = len(dt)
                 J = len(x_mid)
-                
+
                 # Load deterministic iteration data
-                phi_det = np.zeros((K, updates+1, J))
-                J_det = np.zeros((K, updates+1, J+1))
-                Edd_det = np.zeros((K, updates+1, J))
+                phi_det = np.zeros((K, updates + 1, J))
+                J_det = np.zeros((K, updates + 1, J + 1))
+                Edd_det = np.zeros((K, updates + 1, J))
                 with open(output + "_det.txt", "r") as f:
                     for k in range(K):
                         for u in range(updates + 1):
-                            if (k == 0 and u == 0):
+                            if k == 0 and u == 0:
                                 continue
                             f.readline()
                             f.readline()
@@ -227,7 +227,7 @@ for Npi in Np:
                     for i in range(J):
                         dataJ[k * (J + 2) + i + 1, 3] = currentt[k + 1][i][0]
                     for i in range(J):
-                        dataJ[k * (J + 2) + i + 1, 4] = currentt_sd[k+1][i][0]
+                        dataJ[k * (J + 2) + i + 1, 4] = currentt_sd[k + 1][i][0]
                     for i in range(J + 1):
                         dataJ[k * (J + 2) + i + 1, 5] = x[i]
                     for i in range(J + 1):
@@ -239,19 +239,29 @@ for Npi in Np:
                     for i in range(J):
                         dataEdd[k * (J + 2) + i + 1, 0] = x_mid[i]
                     for i in range(J):
-                        dataEdd[k * (J + 2) + i + 1, 1] = eddington[k][i][0]/phi[k][i]
+                        dataEdd[k * (J + 2) + i + 1, 1] = eddington[k][i][0] / phi[k][i]
                     for i in range(J):
-                        dataEdd[k * (J + 2) + i + 1, 2] = eddington_sd[k][i][0]/phi[k][i]
+                        dataEdd[k * (J + 2) + i + 1, 2] = (
+                            eddington_sd[k][i][0] / phi[k][i]
+                        )
                     for i in range(J):
-                        dataEdd[k * (J + 2) + i + 1, 3] = eddingtont[k + 1][i][0]/phit[k+1][i]
+                        dataEdd[k * (J + 2) + i + 1, 3] = (
+                            eddingtont[k + 1][i][0] / phit[k + 1][i]
+                        )
                     for i in range(J):
-                        dataEdd[k * (J + 2) + i + 1, 4] = eddingtont_sd[k+1][i][0]/phit[k+1][i]
+                        dataEdd[k * (J + 2) + i + 1, 4] = (
+                            eddingtont_sd[k + 1][i][0] / phit[k + 1][i]
+                        )
                     for i in range(J + 1):
                         dataEdd[k * (J + 2) + i + 1, 5] = x[i]
                     for i in range(J + 1):
-                        dataEdd[k * (J + 2) + i + 1, 6] = eddingtonx[k][i][0]/phix[k][i]
+                        dataEdd[k * (J + 2) + i + 1, 6] = (
+                            eddingtonx[k][i][0] / phix[k][i]
+                        )
                     for i in range(J + 1):
-                        dataEdd[k * (J + 2) + i + 1, 7] = eddingtonx_sd[k][i][0]/phix[k][i]
+                        dataEdd[k * (J + 2) + i + 1, 7] = (
+                            eddingtonx_sd[k][i][0] / phix[k][i]
+                        )
 
                 # =============================================================================
                 # Print results

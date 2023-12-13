@@ -4,8 +4,9 @@ import matplotlib.animation as animation
 import h5py
 import pandas as pd
 
-method = ["Analog","IC"]
+method = ["Analog", "IC"]
 Np = [400, 1000, 4000, 10000]
+
 
 def process(output):
     # =============================================================================
@@ -48,7 +49,6 @@ def process(output):
     t_mid = 0.5 * (t[:-1] + t[1:])
     K = len(dt)
     J = len(x_mid)
-    
 
     for k in range(K):
         phi[k] /= dx * dt[k]
@@ -72,14 +72,7 @@ def process(output):
 
     FOM = phi * phi / phi_sd / phi_sd / np.sum(n) / Npi
     FOM[n == 0] = 0
-    newFOM = (
-        phi_ref
-        * phi_ref
-        / (phi - phi_ref)
-        / (phi - phi_ref)
-        / np.sum(n)
-        / Npi
-    )
+    newFOM = phi_ref * phi_ref / (phi - phi_ref) / (phi - phi_ref) / np.sum(n) / Npi
     newFOM[phi_ref == 0] = 0
 
     # Write data to large matrix
@@ -156,7 +149,7 @@ def process(output):
         for i in range(J):
             dataJ[k * (J + 2) + i + 1, 3] = currentt[k + 1][i][0]
         for i in range(J):
-            dataJ[k * (J + 2) + i + 1, 4] = currentt_sd[k+1][i][0]
+            dataJ[k * (J + 2) + i + 1, 4] = currentt_sd[k + 1][i][0]
         for i in range(J + 1):
             dataJ[k * (J + 2) + i + 1, 5] = x[i]
         for i in range(J + 1):
@@ -168,19 +161,21 @@ def process(output):
         for i in range(J):
             dataEdd[k * (J + 2) + i + 1, 0] = x_mid[i]
         for i in range(J):
-            dataEdd[k * (J + 2) + i + 1, 1] = eddington[k][i][0]/phi[k][i]
+            dataEdd[k * (J + 2) + i + 1, 1] = eddington[k][i][0] / phi[k][i]
         for i in range(J):
-            dataEdd[k * (J + 2) + i + 1, 2] = eddington_sd[k][i][0]/phi[k][i]
+            dataEdd[k * (J + 2) + i + 1, 2] = eddington_sd[k][i][0] / phi[k][i]
         for i in range(J):
-            dataEdd[k * (J + 2) + i + 1, 3] = eddingtont[k + 1][i][0]/phit[k+1][i]
+            dataEdd[k * (J + 2) + i + 1, 3] = eddingtont[k + 1][i][0] / phit[k + 1][i]
         for i in range(J):
-            dataEdd[k * (J + 2) + i + 1, 4] = eddingtont_sd[k+1][i][0]/phit[k+1][i]
+            dataEdd[k * (J + 2) + i + 1, 4] = (
+                eddingtont_sd[k + 1][i][0] / phit[k + 1][i]
+            )
         for i in range(J + 1):
             dataEdd[k * (J + 2) + i + 1, 5] = x[i]
         for i in range(J + 1):
-            dataEdd[k * (J + 2) + i + 1, 6] = eddingtonx[k][i][0]/phix[k][i]
+            dataEdd[k * (J + 2) + i + 1, 6] = eddingtonx[k][i][0] / phix[k][i]
         for i in range(J + 1):
-            dataEdd[k * (J + 2) + i + 1, 7] = eddingtonx_sd[k][i][0]/phix[k][i]
+            dataEdd[k * (J + 2) + i + 1, 7] = eddingtonx_sd[k][i][0] / phix[k][i]
 
     # =============================================================================
     # Print results
@@ -201,9 +196,8 @@ def process(output):
 
         # Run Overview statistics and flags
 
+
 for Npi in Np:
     for methodi in method:
-        output = (
-            methodi + "_" + str(Npi)
-        )
+        output = methodi + "_" + str(Npi)
         process(output)
